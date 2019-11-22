@@ -1,0 +1,536 @@
+{
+    "LocalizedStrings": [
+        {
+            "ElementType": "ClaimType",
+            "ElementId": "UserId",
+            "StringId": "DisplayName",
+            "Override": "True",
+            "Value": "Ingoakaiwhakamahi"
+        },
+        {
+            "ElementType": "ClaimType",
+            "ElementId": "UserId",
+            "StringId": "PatternHelpText",
+            "Override": "True",
+            "Value": "Kāore te ingoakaiwhakamahi i tukua e koe i te whaimana. Me tīmata ki te pūāhua reta, tau rānei, ā, ka taea anake ngā pūāhua pūāhuatau me ngā tohu e whai ake nei: _-"
+        },
+        {
+            "ElementType": "ClaimType",
+            "ElementId": "UserId",
+            "StringId": "UserHelpText",
+            "Override": "True",
+            "Value": "Ingoa i whakamahia hei takiuru."
+        },
+        {
+            "ElementType": "ClaimType",
+            "ElementId": "displayName",
+            "StringId": "DisplayName",
+            "Override": "True",
+            "Value": "Ingoa whakaatu"
+        },
+        {
+            "ElementType": "ClaimType",
+            "ElementId": "displayName",
+            "StringId": "UserHelpText",
+            "Override": "True",
+            "Value": "Tō ingoa whakaatu."
+        },
+        {
+            "ElementType": "ClaimType",
+            "ElementId": "email",
+            "StringId": "DisplayName",
+            "Override": "True",
+            "Value": "Wāhitau īmēra"
+        },
+        {
+            "ElementType": "ClaimType",
+            "ElementId": "email",
+            "StringId": "PatternHelpText",
+            "Override": "True",
+            "Value": "Tāurutia koa tētahi wāhitau īmēra tika."
+        },
+        {
+            "ElementType": "ClaimType",
+            "ElementId": "email",
+            "StringId": "UserHelpText",
+            "Override": "True",
+            "Value": "Wāhitau īmēra ka taea te whakamahi hei whakapā atu ki a koe."
+        },
+        {
+            "ElementType": "ClaimType",
+            "ElementId": "givenName",
+            "StringId": "DisplayName",
+            "Override": "True",
+            "Value": "Ingoa tuku"
+        },
+        {
+            "ElementType": "ClaimType",
+            "ElementId": "givenName",
+            "StringId": "UserHelpText",
+            "Override": "True",
+            "Value": "Tō ingoa i tukua (i mōhiotia hoki hei ingoa tuatahi)."
+        },
+        {
+            "ElementType": "ClaimType",
+            "ElementId": "newPassword",
+            "StringId": "DisplayName",
+            "Override": "True",
+            "Value": "Kupuhipa hōu"
+        },
+        {
+            "ElementType": "ClaimType",
+            "ElementId": "newPassword",
+            "StringId": "PatternHelpText",
+            "Override": "True",
+            "Value": "8-16 characters, containing 3 out of 4 of the following: Lowercase characters, uppercase characters, digits (0-9), and one or more of the following symbols: @ # $ % ^ \u0026 * - _ + = [ ] { } | \\ : \u0027 , ? / ` ~ \" ( ) ; ."
+        },
+        {
+            "ElementType": "ClaimType",
+            "ElementId": "newPassword",
+            "StringId": "UserHelpText",
+            "Override": "True",
+            "Value": "Tāuru kupuhipa hōu"
+        },
+        {
+            "ElementType": "ClaimType",
+            "ElementId": "reenterPassword",
+            "StringId": "DisplayName",
+            "Override": "True",
+            "Value": "Whakaūkia te kupuhipa hōu"
+        },
+        {
+            "ElementType": "ClaimType",
+            "ElementId": "reenterPassword",
+            "StringId": "PatternHelpText",
+            "Override": "True",
+            "Value": "8-16 characters, containing 3 out of 4 of the following: Lowercase characters, uppercase characters, digits (0-9), and one or more of the following symbols: @ # $ % ^ \u0026 * - _ + = [ ] { } | \\ : \u0027 , ? / ` ~ \" ( ) ; ."
+        },
+        {
+            "ElementType": "ClaimType",
+            "ElementId": "reenterPassword",
+            "StringId": "UserHelpText",
+            "Override": "True",
+            "Value": "Whakaūkia te kupuhipa hōu"
+        },
+        {
+            "ElementType": "ClaimType",
+            "ElementId": "surname",
+            "StringId": "DisplayName",
+            "Override": "True",
+            "Value": "Rua ona ingoa"
+        },
+        {
+            "ElementType": "ClaimType",
+            "ElementId": "surname",
+            "StringId": "UserHelpText",
+            "Override": "True",
+            "Value": "Tō rua ona ingoa (i mōhiotia hoki hei ingoa whānau, ingoa whakamutunga rānei)."
+        },
+        {
+            "ElementType": "ErrorMessage",
+            "ElementId": null,
+            "StringId": "ServiceThrottled",
+            "Override": "True",
+            "Value": "He maha rawa ngā tono i tēnei wā. Taihoa koa mō ētahi wā ka ngana anō."
+        },
+        {
+            "ElementType": "ErrorMessage",
+            "ElementId": null,
+            "StringId": "UserMessageIfClaimNotVerified",
+            "Override": "True",
+            "Value": "Kāore te tono i te manatoko: {0}"
+        },
+        {
+            "ElementType": "ErrorMessage",
+            "ElementId": null,
+            "StringId": "UserMessageIfClaimsPrincipalAlreadyExists",
+            "Override": "True",
+            "Value": "Kei te tīari kē tētahi kaiwhakamahi me te ID kua tohua. Kōwhiritia koa tētahi atu mea."
+        },
+        {
+            "ElementType": "ErrorMessage",
+            "ElementId": null,
+            "StringId": "UserMessageIfIncorrectPattern",
+            "Override": "True",
+            "Value": "He tauira hē mō: {0}"
+        },
+        {
+            "ElementType": "ErrorMessage",
+            "ElementId": null,
+            "StringId": "UserMessageIfInvalidInput",
+            "Override": "True",
+            "Value": "he tāuru muhu {0}."
+        },
+        {
+            "ElementType": "ErrorMessage",
+            "ElementId": null,
+            "StringId": "UserMessageIfMissingRequiredElement",
+            "Override": "True",
+            "Value": "He huānga e ngaro ana: {0}"
+        },
+        {
+            "ElementType": "ErrorMessage",
+            "ElementId": null,
+            "StringId": "UserMessageIfValidationError",
+            "Override": "True",
+            "Value": "He hapa i te whakamanatanga: {0}"
+        },
+        {
+            "ElementType": "InputValidation",
+            "ElementId": "CustomPassword",
+            "StringId": "CharacterClasses",
+            "Override": "True",
+            "Value": "Me nui ake te {0} o tō kupuhipa:"
+        },
+        {
+            "ElementType": "InputValidation",
+            "ElementId": "CustomPassword",
+            "StringId": "CharacterClassesAll",
+            "Override": "True",
+            "Value": "Me whai tēnei kupuhipa i ēnei e whai ake nei:"
+        },
+        {
+            "ElementType": "InputValidation",
+            "ElementId": "StrongPassword",
+            "StringId": "CharacterClasses",
+            "Override": "True",
+            "Value": "Me nui ake te {0} o tō kupuhipa:"
+        },
+        {
+            "ElementType": "Predicate",
+            "ElementId": "AllowedAADCharacters",
+            "StringId": "HelpText",
+            "Override": "True",
+            "Value": "I tukuna tētahi pūāhua muhu."
+        },
+        {
+            "ElementType": "Predicate",
+            "ElementId": "DateRange",
+            "StringId": "HelpText",
+            "Override": "True",
+            "Value": "Me noho te rā ki waenganui {0} me {1}."
+        },
+        {
+            "ElementType": "Predicate",
+            "ElementId": "DateRangeBetween1905AndToday",
+            "StringId": "HelpText",
+            "Override": "True",
+            "Value": "Me noho te rā ki waenga i te 01-01-1905 me tēnei."
+        },
+        {
+            "ElementType": "Predicate",
+            "ElementId": "DisallowedWhitespace",
+            "StringId": "HelpText",
+            "Override": "True",
+            "Value": "Me kaua te kupuhipa e tīmata, te whakamutu rānei me te pūāhua mokowāmā."
+        },
+        {
+            "ElementType": "Predicate",
+            "ElementId": "ExactLength",
+            "StringId": "HelpText",
+            "Override": "True",
+            "Value": "Me ōrite te kupuhipa ki ngā pūāhua {0}."
+        },
+        {
+            "ElementType": "Predicate",
+            "ElementId": "IsLengthBetween8And64",
+            "StringId": "HelpText",
+            "Override": "True",
+            "Value": "Me noho te kupuhipa i waenga i te 8 me te 64 pūāhua."
+        },
+        {
+            "ElementType": "Predicate",
+            "ElementId": "LengthRange",
+            "StringId": "HelpText",
+            "Override": "True",
+            "Value": "Me noho te kupuhipa i waenga i {0} me ngā pūāhua {1}."
+        },
+        {
+            "ElementType": "Predicate",
+            "ElementId": "Lowercase",
+            "StringId": "HelpText",
+            "Override": "True",
+            "Value": "he pū pūriki"
+        },
+        {
+            "ElementType": "Predicate",
+            "ElementId": "Number",
+            "StringId": "HelpText",
+            "Override": "True",
+            "Value": "tētahi tau"
+        },
+        {
+            "ElementType": "Predicate",
+            "ElementId": "PIN",
+            "StringId": "HelpText",
+            "Override": "True",
+            "Value": "Me whakamahi ngā tau anake i te kupuhipa."
+        },
+        {
+            "ElementType": "Predicate",
+            "ElementId": "Symbol",
+            "StringId": "HelpText",
+            "Override": "True",
+            "Value": "tētahi tohu"
+        },
+        {
+            "ElementType": "Predicate",
+            "ElementId": "Uppercase",
+            "StringId": "HelpText",
+            "Override": "True",
+            "Value": "he pū pūmatua"
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "alert_message",
+            "Override": "True",
+            "Value": "E tika ana kia whakakorea te tāuru i ō taipitopito?"
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "alert_no",
+            "Override": "True",
+            "Value": "Kāore"
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "alert_title",
+            "Override": "True",
+            "Value": "Whakakore i te Tāuru i ō Taipitopito"
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "alert_yes",
+            "Override": "True",
+            "Value": "Āe"
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "button_cancel",
+            "Override": "True",
+            "Value": "Whakakore"
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "button_continue",
+            "Override": "True",
+            "Value": "Waihanga"
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "cancel_message",
+            "Override": "True",
+            "Value": "Kua whakakorea e te kaiwhakamahi ngā mōhiohio whakapuakina-whaiaro"
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "day",
+            "Override": "True",
+            "Value": "Te rā"
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "error_fieldIncorrect",
+            "Override": "True",
+            "Value": "Kei te hē tētahi, ētahi rānei o ngā āpure. Tēnā, tirohia ō tāurunga ka ngana anō."
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "error_passwordEntryMismatch",
+            "Override": "True",
+            "Value": "Kāore ngā āpure tāurunga kupuhipa i te ōrite. Tāurutia koa te kupuhipa ōrite ki ngā āpure e rua ka ngana anō."
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "error_requiredFieldMissing",
+            "Override": "True",
+            "Value": "Kua ngaro tētahi āpure e hiahiatia ana. Whakakīa koa ngā āpure e hiahiatia ana ka ngana anō."
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "helplink_text",
+            "Override": "True",
+            "Value": "He aha tēnei?"
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "initial_intro",
+            "Override": "True",
+            "Value": "Tukuna koa ngā taipitopito e whai ake nei."
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "month",
+            "Override": "True",
+            "Value": "Marama"
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "months",
+            "Override": "True",
+            "Value": "Ko kohitātea, ko Huitanguru, ko te Paenga whāwhā, ko Pipiri, ko o hōngongoi, akuhata, mahuru, oketopa"
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "preloader_alt",
+            "Override": "True",
+            "Value": "Taihoa koa"
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "required_field",
+            "Override": "True",
+            "Value": "E hiahiatia ana tēnei mōhiohio."
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "ver_but_default",
+            "Override": "True",
+            "Value": "Taunoa"
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "ver_but_edit",
+            "Override": "True",
+            "Value": "Huri ī-mēra"
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "ver_but_resend",
+            "Override": "True",
+            "Value": "Tuku waehere hōu"
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "ver_but_send",
+            "Override": "True",
+            "Value": "Tuku waehere manatokonga"
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "ver_but_verify",
+            "Override": "True",
+            "Value": "Waehere manatoko"
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "ver_fail_code_expired",
+            "Override": "True",
+            "Value": "Kua pau taua waehere. Tono koa i tētahi waehere hōu."
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "ver_fail_no_retry",
+            "Override": "True",
+            "Value": "He maha rawa ngā nganatanga hē i a koe. Ngana anō ā muri ake.."
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "ver_fail_retry",
+            "Override": "True",
+            "Value": "Kei te hē tēnā waehere. Ngana anō.."
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "ver_fail_server",
+            "Override": "True",
+            "Value": "Kei te raruraru te manatoko i tō wāhitau īmēra. Tāurutia koa tētahi wāhitau īmēra tika ka ngana anō."
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "ver_fail_throttled",
+            "Override": "True",
+            "Value": "He maha rawa ngā tono hei manatoko i tēnei wāhitau īmēra. Taihoa koa, ka ngana anō."
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "ver_incorrect_format",
+            "Override": "True",
+            "Value": "Hōputu Incorect."
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "ver_info_msg",
+            "Override": "True",
+            "Value": "Kua tukuna te waehere manatokonga ki tō pouakaroto. Tāruatia koa ki te pouaka tāuru i raro nei."
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "ver_input",
+            "Override": "True",
+            "Value": "Te waehere manatokonga."
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "ver_intro_msg",
+            "Override": "True",
+            "Value": "E hiahiatia ana te manatokonga. Pāwhiri koa i te pātene Tuku."
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "ver_sent",
+            "Override": "True",
+            "Value": "Kua tukua te waehere manatokonga ki:"
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "ver_success_msg",
+            "Override": "True",
+            "Value": "Kua manatoko te wāhitau ī-mēra. Ka taea ināianei te haere tonu."
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "ver_success_screenreader_msg",
+            "Override": "True",
+            "Value": "Kua manatoko te wāhitau ī-mēra. Ka taea ināianei te haere tonu."
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "verifying_blurb",
+            "Override": "True",
+            "Value": "Taihoa koa kia tukatuka mātou i ō mōhiohio."
+        },
+        {
+            "ElementType": "UxElement",
+            "ElementId": null,
+            "StringId": "year",
+            "Override": "True",
+            "Value": "Tau"
+        }
+    ]
+}
