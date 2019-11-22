@@ -10,7 +10,7 @@ Azure AD B2C currently supports [36 languages](https://docs.microsoft.com/en-gb/
 for more information on Azure AD B2C Language customisation see the B2C Documetation pages - [Language customization in Azure Active Directory B2C](https://docs.microsoft.com/en-gb/azure/active-directory-b2c/active-directory-b2c-reference-language-customization)
 
 This Powershell script uses [Azure Cognative API](https://www.microsoft.com/en-us/translator/) to translate the language file values from english to the specified language.
-The example sets the language to New Zealand Māori (mi) as the language to convert to. Samples of the output can also be seen under the [Māori folder](/Scripts/ConvertLanguage/Maori)
+The example sets the language to New Zealand Māori (mi) as the language to convert to. Samples of the output can also be seen under the [Māori folder](/ConvertLanguage/Maori)
 
 ## How to run the script
 1. First download the default language files from B2C (See [documentation](https://docs.microsoft.com/en-gb/azure/active-directory-b2c/active-directory-b2c-reference-language-customization#customize-your-strings))
