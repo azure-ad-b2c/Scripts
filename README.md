@@ -6,6 +6,14 @@ In this repo, you will find sample scripts related to the administration and use
 - [Convert Language files using Azure Cognative API](/ConvertLanguage) This sample script uses the [Azure Cognative API](https://www.microsoft.com/en-us/translator/) This sample web test shows how to run tests and monitor results of B2C sign in's, using Azure Application Insights.) to convert Built-In language files form one language to another.
 - [Convert from Built-In Language files to IEF](/BultInLangtoCustLang) This script converts the language file format from Built-In to that required for Identitiy Experience Framework policies.
 
+## Getting Started
+- Scripts to [automate setting up a new B2C tenant](/GettingStarted). These scripts will prepare your B2C tenant to be ready for testing in seconds:
+    - Create a B2C GraphApp for scripting
+    - Create the Token Signing and Encryption keys
+    - Create the IdentityExperienceFramework apps
+    - Download/Modify/Upload the [B2C Starter Pack](https://github.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack)
+    - Create a test WebApp so you can test your first signup/signin
+
 ## Community Help and Support
 Use [Stack Overflow](https://stackoverflow.com/questions/tagged/azure-ad-b2c) to get support from the community. Ask your questions on Stack Overflow first and browse existing issues to see if someone has asked your question before. Make sure that your questions or comments are tagged with [azure-ad-b2c].
 If you find a bug in the sample, please raise the issue on [GitHub Issues](https://github.com/azure-ad-b2c/samples/issues).
