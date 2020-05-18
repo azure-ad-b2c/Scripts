@@ -47,6 +47,13 @@ $oauthBody  = @{grant_type="client_credentials";resource="https://graph.microsof
 $oauth      = Invoke-RestMethod -Method Post -Uri "https://login.microsoft.com/$tenantName/oauth2/token?api-version=1.0" -Body $oauthBody
 <##>
 $url = "https://graph.microsoft.com/beta/trustFramework/keySets"
+
+try {
+    $resp = Invoke-RestMethod -Method GET -Uri "$url/$KeyContainerName" -Headers @{'Authorization'="$($oauth.token_type) $($oauth.access_token)"} -ErrorAction SilentlyContinue
+    write-output "$($resp.id) already has $($resp.keys.Length) keys"
+    exit 0
+} catch {
+}
 $body = @"
 {
     "id": "$KeyContainerName"

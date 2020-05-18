@@ -19,9 +19,9 @@ $claimsProviderXml=@"
     <TechnicalProfile Id="AAD-Common">
       <Metadata>
         <!--Insert b2c-extensions-app application ID here, for example: 11111111-1111-1111-1111-111111111111-->  
-        <Item Key="{client_id}"></Item>
+        <Item Key="ClientId">{client_id}</Item>
         <!--Insert b2c-extensions-app application ObjectId here, for example: 22222222-2222-2222-2222-222222222222-->
-        <Item Key="{objectId}"></Item>
+        <Item Key="ApplicationObjectId">{objectId}</Item>
       </Metadata>
     </TechnicalProfile>
   </TechnicalProfiles> 
@@ -35,6 +35,7 @@ if ( $ext.TrustFrameworkPolicy.ClaimsProviders.InnerXml -imatch $tpId ) {
 
 # if no client_id given, use the standard b2c-extensions-app
 if ( "" -eq $client_id ) {
+    if ( "" -eq $AppDisplayName ) { $AppDisplayName = "b2c-extensions-app"}
     write-output "Using $AppDisplayName"
     $appExt = Get-AzureADApplication -SearchString $AppDisplayName
     $client_id = $appExt.AppId   

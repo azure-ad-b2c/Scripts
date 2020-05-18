@@ -6,53 +6,16 @@ param (
     [Parameter(Mandatory=$false)][Alias('s')][boolean]$UploadSecrets = $false  
     )
 
-if ( "" -eq $PolicyPath ) {
-    $PolicyPath = (get-location).Path
-}
-if ( "" -eq $ConfigPath ) {
-    $ConfigPath = "$PolicyPath\b2cAppSettings.json"
-}
-if ( "" -eq $PolicyPrefix ) {
-    $PolicyPrefix = (Get-Item -Path ".\").Name
-}
-$b2cAppSettings =(Get-Content -Path $ConfigPath | ConvertFrom-json)
+& $PSScriptRoot\aadb2c-env.ps1 -p $PolicyPath -n $PolicyPrefix -c $ConfigPath
 
-$env:B2CAppId=$b2cAppSettings.ClientCredentials.client_id
-$env:B2CAppKey=$b2cAppSettings.ClientCredentials.client_secret
-
-if ( $null -ne $b2cAppSettings.AzureStorageAccount ) {
-    $uxStorageAccount=$b2cAppSettings.AzureStorageAccount.AccountName
-    $uxStorageAccountKey=$b2cAppSettings.AzureStorageAccount.AccountKey
-    $uxTemplateLocation= "$($b2cAppSettings.AzureStorageAccount.ContainerName)/$($b2cAppSettings.AzureStorageAccount.Path)/" + $PolicyPrefix.ToLower()
-    $EndpointSuffix=$b2cAppSettings.AzureStorageAccount.EndpointSuffix
-    $storageConnectString="DefaultEndpointsProtocol=https;AccountName=$uxStorageAccount;AccountKey=$uxStorageAccountKey;EndpointSuffix=$EndpointSuffix"    
-}
+$PolicyPath = $global:PolicyPath
+$PolicyPrefix = $global:PolicyPrefix
 
 function writeSeparator( $msg ) {
     write-output "*******************************************************************************"
     write-output "* $msg"
     write-output "*******************************************************************************"
 }
-
-$tenant = Get-AzureADTenantDetail
-if ( $null -eq $tenant ) {
-    write-host "Not logged in to a B2C tenant. Please run Connect-AzAccount -t {tenantId}"
-    exit 1
-}
-$tenantName = $tenant.VerifiedDomains[0].Name
-$tenantID = $tenant.ObjectId
-
-$app = Get-AzureADApplication -Filter "AppID eq '$($b2cAppSettings.ClientCredentials.client_id)'"
-if ( $null -eq $app ) {
-    write-host "App not found in B2C tenant: $($b2cAppSettings.ClientCredentials.client_id)"
-    exit 3
-}
-
-writeSeparator "Configuration"
-write-output "Config File    :`t$ConfigPath"
-write-output "B2C Tenant     :`t$tenantID, $tenantName"
-write-output "B2C Client Cred:`t$($env:B2CAppId), $($app.DisplayName)"
-write-output "Policy Prefix  :`t$PolicyPrefix"
 
 # download StarterPack files from github and modify them to refer to your tenant
 writeSeparator "Downloading and preparing Starter Pack"

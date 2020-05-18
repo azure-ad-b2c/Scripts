@@ -232,3 +232,37 @@ To automatically provision the app, run this script
 
 It will create a webapp that redirects to [https://jwt.ms](https://jwt.ms) so you can test the B2C policy
 
+## After initial creation
+
+After the initial creation and upload of the policies, you can continue to work with the policies
+
+### To load the settings in a new Powershell command prompt
+
+```Powershell
+cd demo
+..\aadb2c-env.ps1 -ConfigPath ..\b2cAppSettings.json
+```
+
+### To rewire the policies to another B2C tenant
+
+This script updates all policy xml files with:
+1. PolicyId and TenantId in the header
+2. App guids user for custom attributes
+3. App guids for IdentityExperienceFramework and ProxyIdentityExperienceFramework
+
+```Powershell
+cd demo
+..\aadb2c-policy-set-tenant.ps1 -t "mynewtenant.onmicrosoft.com" -p $pwd.Path
+```
+
+### To upload the policies to B2C
+
+```Powershell
+..\aadb2c-upload-policy.ps1 -t "mynewtenant.onmicrosoft.com" -p "C:\path\to\my\policies"
+```
+
+or if the policies are in the current folder
+
+```Powershell
+..\aadb2c-upload-policy.ps1
+```
