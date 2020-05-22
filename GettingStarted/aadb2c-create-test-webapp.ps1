@@ -28,7 +28,7 @@ $requiredResourceAccess=@"
     }
 ]
 "@ | ConvertFrom-json
-        
+
 $reqAccess=@()
 foreach( $resApp in $requiredResourceAccess ) {
     $req = New-Object -TypeName "Microsoft.Open.AzureAD.Model.RequiredResourceAccess"
@@ -40,15 +40,25 @@ foreach( $resApp in $requiredResourceAccess ) {
 }
 
 write-output "Creating application $DisplayName"
-$app = New-AzureADApplication -DisplayName $DisplayName -IdentifierUris "http://$TenantName/$DisplayName" -ReplyUrls @("https://jwt.ms") -RequiredResourceAccess $reqAccess
+$app = New-AzureADApplication -DisplayName $DisplayName -IdentifierUris "https://$TenantName/$DisplayName" -ReplyUrls @("https://jwt.ms") -RequiredResourceAccess $reqAccess -Oauth2AllowImplicitFlow $true
 
 write-output "Creating ServicePrincipal $DisplayName"
 $sp = New-AzureADServicePrincipal -AccountEnabled $true -AppId $App.AppId -AppRoleAssignmentRequired $false -DisplayName $DisplayName 
 
+
+# -----------------------------------------------------------------------------------------
+# Patch WebApp with attributes Poweshell can't
+# -----------------------------------------------------------------------------------------
+
+Start-Sleep 15 # replication
+
 $oauthBody  = @{grant_type="client_credentials";resource="https://graph.microsoft.com/";client_id=$AppID;client_secret=$AppKey;scope="https://graph.microsoft.com/.default Application.ReadWrite.All"}
 $oauth      = Invoke-RestMethod -Method Post -Uri "https://login.microsoft.com/$tenantName/oauth2/token?api-version=1.0" -Body $oauthBody
-$body = @{ SignInAudience = "AzureADandPersonalMicrosoftAccount" }
+
 $apiUrl = "https://graph.microsoft.com/v1.0/applications/$($app.objectId)"
-Invoke-RestMethod -Uri $apiUrl -Headers @{Authorization = "Bearer $($oauth.access_token)" }  -Method PATCH -Body $($body | convertto-json) -ContentType "application/json"
+$body = @{ SignInAudience = "AzureADandPersonalMicrosoftAccount" }
+Invoke-RestMethod -Uri $apiUrl -Headers @{Authorization = "Bearer $($oauth.access_token)" }  -Method PATCH -Body ($body | ConvertTo-json) -ContentType "application/json"
 
 & $PSScriptRoot\aadb2c-app-grant-permission.ps1 -n $DisplayName
+
+

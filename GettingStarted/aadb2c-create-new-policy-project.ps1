@@ -1,12 +1,13 @@
 param (
-    [Parameter(Mandatory=$false)][Alias('t')][string]$TenantName = "",
-    [Parameter(Mandatory=$false)][Alias('p')][string]$PolicyPath = "",
-    [Parameter(Mandatory=$false)][Alias('n')][string]$PolicyPrefix = "",  
-    [Parameter(Mandatory=$false)][Alias('c')][string]$ConfigPath = "",  
-    [Parameter(Mandatory=$false)][Alias('s')][boolean]$UploadSecrets = $false  
+    [Parameter(Mandatory=$false)][Alias('t')][string]$TenantName = "",              # current tenant assumed if not specified
+    [Parameter(Mandatory=$false)][Alias('p')][string]$PolicyPath = "",              # local path assumed if not specified
+    [Parameter(Mandatory=$false)][Alias('n')][string]$PolicyPrefix = "",            # prefix to add to PolicyIds, like B2C_1A_<something>_SignUpOrSignIn
+    [Parameter(Mandatory=$false)][Alias('k')][boolean]$KeepPolicyIds = $False,      # if this is $True, $PolicyPrefix is ignored and PolicyIds are kept unchanged
+    [Parameter(Mandatory=$false)][Alias('c')][string]$ConfigPath = "",              # full path to your b2cAppSettings.json config file
+    [Parameter(Mandatory=$false)][Alias('s')][boolean]$UploadSecrets = $false       # if to create secrets too
     )
 
-& $PSScriptRoot\aadb2c-env.ps1 -p $PolicyPath -n $PolicyPrefix -c $ConfigPath
+& $PSScriptRoot\aadb2c-env.ps1 -p $PolicyPath -n $PolicyPrefix -k $KeepPolicyIds -c $ConfigPath
 
 $PolicyPath = $global:PolicyPath
 $PolicyPrefix = $global:PolicyPrefix

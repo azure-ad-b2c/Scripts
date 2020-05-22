@@ -1,6 +1,7 @@
 param (
     [Parameter(Mandatory=$false)][Alias('p')][string]$PolicyPath = "",
     [Parameter(Mandatory=$false)][Alias('n')][string]$PolicyPrefix = "",  
+    [Parameter(Mandatory=$false)][Alias('k')][boolean]$KeepPolicyIds = $False,  
     [Parameter(Mandatory=$false)][Alias('c')][string]$ConfigPath = "" 
     )
 
@@ -10,7 +11,7 @@ if ( "" -eq $PolicyPath ) {
 if ( "" -eq $ConfigPath ) {
     $ConfigPath = "$PolicyPath\b2cAppSettings.json"
 }
-if ( "" -eq $PolicyPrefix ) {
+if ( "" -eq $PolicyPrefix -and $True -ne $KeepPolicyIds ) {
     $PolicyPrefix = (Get-Item -Path ".\").Name
 }
 $global:PolicyPath = $PolicyPath

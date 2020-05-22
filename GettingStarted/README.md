@@ -243,6 +243,13 @@ cd demo
 ..\aadb2c-env.ps1 -ConfigPath ..\b2cAppSettings.json
 ```
 
+If you don't want to use a PolicyPrefix in the PolicyId and keep the names as is (like B2C_1A_SignUpOrSignIn), then use the -k switch to keep the PolicyIds
+
+```Powershell
+cd demo
+..\aadb2c-env.ps1 -ConfigPath ..\b2cAppSettings.json -KeepPolicyIds $True
+```
+
 ### To rewire the policies to another B2C tenant
 
 This script updates all policy xml files with:

@@ -9,6 +9,6 @@ param (
 
 & $PSScriptRoot\aadb2c-download-starter-pack.ps1 -p $PolicyPath -b $PolicyType
 
-& $PSScriptRoot\aadb2c-policy-set-tenant.ps1 -t $TenantName -p $PolicyPath -x $PolicyPrefix `
+& $PSScriptRoot\aadb2c-policy-set-tenant.ps1 -t $TenantName -p $PolicyPath -x $PolicyPrefix  `
                 -IefAppName $IefAppName -IefProxyAppName $IefProxyAppName -ExtAppDisplayName $ExtAppDisplayName
  
