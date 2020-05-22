@@ -164,9 +164,11 @@ The script [aadb2c-create-new-policy-project.ps1](aadb2c-create-new-policy-proje
 
 When adding features to you configuration the file ***TrustFrameworkBase.xml*** is never changed, all work is done via editing ***TrustFrameworkExtensions.xml***. The script [aadb2c-add-claimsprovider.ps1](aadb2c-add-claimsprovider.ps1), which adds different Claims Providers, adds quite a lot of xml depending on how many providers you use. If you want UX Customization, the script [aadb2c-policy-ux-customize.ps1](aadb2c-policy-ux-customize.ps1) will copy the ContentDefinition elements from the Base file, modify them and insert them into the Extensions file. All is done as specified in the documentation, but the automated version means you have the policies ready in ~10 seconds rather than spending a hour editing the files. 
 
+If you set the KeepPolicyIds switch to $True, the PolicyIds will be kept as-is, is B2C_1A_TrustFrameworkBase, B2C_1A_TrustFrameworkExtensions, etc.
+
 ```Powershell
 md demo
-..\aadb2c-create-new-policy-project.ps1 -ConfigPath ..\b2cAppSettings.json -UploadSecrets $true
+..\aadb2c-create-new-policy-project.ps1 -ConfigPath ..\b2cAppSettings.json -UploadSecrets $true [-KeepPolicyIds $true]
 *******************************************************************************
 * Configuration
 *******************************************************************************
