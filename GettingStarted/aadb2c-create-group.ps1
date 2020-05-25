@@ -3,7 +3,7 @@ param (
     [Parameter(Mandatory=$false)][Alias('e')][string]$email = ""
     )
 
-$user = Get-AzureADUser -Filter "signInNames/any(x:x/value eq '$email’)" -ErrorAction SilentlyContinue
+$user = Get-AzureADUser -Filter "signInNames/any(x:x/value eq '$email')" -ErrorAction SilentlyContinue
 if ( $null -eq $user ) {
     write-error "User with signInName email=$email not found"
     exit 1
