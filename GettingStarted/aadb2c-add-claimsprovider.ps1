@@ -1,7 +1,7 @@
 param (
     [Parameter(Mandatory=$false)][Alias('p')][string]$PolicyPath = "",    
     [Parameter(Mandatory=$true)][Alias('i')][string]$IdpName = "",    # google, twitter, amazon, linkedid, AzureAD
-    [Parameter(Mandatory=$true)][Alias('c')][string]$client_id = "",    # client_id/AppId o the IdpName
+    [Parameter(Mandatory=$false)][Alias('c')][string]$client_id = "",    # client_id/AppId o the IdpName
     [Parameter(Mandatory=$false)][Alias('a')][string]$AadTenantName = ""    # contoso.com or contoso
     )
    
@@ -9,6 +9,14 @@ if ( "" -eq $PolicyPath ) {
     $PolicyPath = (get-location).Path
 }
     
+if ( "" -eq $client_id ) {
+  $client_id = ($global:b2cAppSettings.ClaimsProviders | where {$_.Name -eq $IdpName }).client_id
+}
+
+if ( "" -eq $AadTenantName -and "azuread" -eq $IdpName.ToLower() ) {
+  $AadTenantName = ($global:b2cAppSettings.ClaimsProviders | where {$_.Name -eq $IdpName }).DomainName
+}
+
 [xml]$base =Get-Content -Path "$PolicyPath\TrustFrameworkBase.xml" -Raw
 [xml]$ext =Get-Content -Path "$PolicyPath\TrustFrameworkExtensions.xml" -Raw
 

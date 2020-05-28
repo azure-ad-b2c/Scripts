@@ -99,7 +99,7 @@ if ( "" -eq $tenantID ) {
 write-host "Tenant:  `t$tenantName`nTenantID:`t$tenantId"
 
 <##>
-write-host "Getting AppID's for IdentityExperienceFramework / ProxyIdentityExperienceFramework"
+write-host "Getting AppID's for $IefAppName / $IefProxyAppName"
 $AppIdIEF = (Get-AzureADApplication -Filter "DisplayName eq '$iefAppName'").AppId
 $AppIdIEFProxy = (Get-AzureADApplication -Filter "DisplayName eq '$iefProxyAppName'").AppId
 

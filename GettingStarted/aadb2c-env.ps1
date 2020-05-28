@@ -16,6 +16,7 @@ if ( "" -eq $PolicyPrefix -and $True -ne $KeepPolicyIds ) {
 }
 $global:PolicyPath = $PolicyPath
 $global:PolicyPrefix = $PolicyPrefix
+$global:ConfigPath = $ConfigPath
 $global:b2cAppSettings =(Get-Content -Path $ConfigPath | ConvertFrom-json)
 
 $env:B2CAppId=$b2cAppSettings.ClientCredentials.client_id
