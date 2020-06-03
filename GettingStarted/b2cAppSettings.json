@@ -1,8 +1,10 @@
 {
+    "TenantName": "yourtenant.onmicrosoft.com",
     "ProjectPrefix": "demo",
     "StarterPack": "SocialAndLocalAccounts",
     "IefAppName": "IdentityExperienceFramework",
     "IefProxyAppName": "ProxyIdentityExperienceFramework",    
+    "InstrumentationKey": "...guid...",
     
     "ClientCredentials": {
         "client_id": "...guid...",

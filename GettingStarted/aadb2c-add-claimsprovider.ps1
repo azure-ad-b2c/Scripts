@@ -17,8 +17,8 @@ if ( "" -eq $AadTenantName -and "azuread" -eq $IdpName.ToLower() ) {
   $AadTenantName = ($global:b2cAppSettings.ClaimsProviders | where {$_.Name -eq $IdpName }).DomainName
 }
 
-[xml]$base =Get-Content -Path "$PolicyPath\TrustFrameworkBase.xml" -Raw
-[xml]$ext =Get-Content -Path "$PolicyPath\TrustFrameworkExtensions.xml" -Raw
+[xml]$base =Get-Content -Path "$PolicyPath/TrustFrameworkBase.xml" -Raw
+[xml]$ext =Get-Content -Path "$PolicyPath/TrustFrameworkExtensions.xml" -Raw
 
 $googleTPId = "Google-OAuth"
 $googleClaimsExchangeId="GoogleExchange"
@@ -318,7 +318,7 @@ if ( $ext.TrustFrameworkPolicy.ClaimsProviders.InnerXml -imatch $tpId ) {
   if ( "Facebook-OAUTH" -eq $tpId) {
     write-output "Updating TechnicalProfileId $tpId"
     $ext.TrustFrameworkPolicy.InnerXml = $ext.TrustFrameworkPolicy.InnerXml.Replace( "facebook_clientid", $client_id) 
-    $ext.Save("$PolicyPath\TrustFrameworkExtensions.xml")        
+    $ext.Save("$PolicyPath/TrustFrameworkExtensions.xml")        
     exit 0
   }
   write-output "TechnicalProfileId $tpId already exists in policy"
@@ -363,4 +363,4 @@ if ( $true -eq $copyFromBase ) {
 }
 $ext.TrustFrameworkPolicy.InnerXml = $ext.TrustFrameworkPolicy.InnerXml.Replace( "xmlns=`"`"", "") 
 
-$ext.Save("$PolicyPath\TrustFrameworkExtensions.xml")
+$ext.Save("$PolicyPath/TrustFrameworkExtensions.xml")

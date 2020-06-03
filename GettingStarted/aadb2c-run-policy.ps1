@@ -2,19 +2,31 @@ param (
     [Parameter(Mandatory=$true)][Alias('p')][string]$PolicyFile,
     [Parameter(Mandatory=$true)][Alias('n')][string]$WebAppName = "",
     [Parameter(Mandatory=$false)][Alias('r')][string]$redirect_uri = "https://jwt.ms",
-    [Parameter(Mandatory=$false)][Alias('s')][string]$scopes = ""
+    [Parameter(Mandatory=$false)][Alias('s')][string]$scopes = "",
+    [Parameter(Mandatory=$false)][boolean]$AzureCli = $False         # if to force Azure CLI on Windows
     )
 
 if (!(Test-Path $PolicyFile -PathType leaf)) {
     write-error "File does not exists: $PolicyFile"
     exit 1
 }
+if ( $env:PATH -imatch "/usr/bin" ) {                           # Mac/Linux
+    $isWinOS = $false
+} else {
+    $isWinOS = $true
+}
+
 [xml]$xml = Get-Content $PolicyFile
 $PolicyId = $xml.TrustFrameworkPolicy.PolicyId
 $tenantName = $xml.TrustFrameworkPolicy.TenantId
 
 write-host "Getting test app $WebAppName"
-$app = Get-AzureADApplication -SearchString $WebAppName -ErrorAction SilentlyContinue
+if ( $False -eq $isWinOS -or $True -eq $AzureCli ) {
+    $app = (az ad app list --display-name $WebAppName | ConvertFrom-json)
+} else {
+    $app = Get-AzureADApplication -SearchString $WebAppName -ErrorAction SilentlyContinue
+}
+
 if ( $null -eq $app ) {
     write-error "App isn't registered: $WebAppName"
     exit 1
@@ -46,4 +58,8 @@ $url = "https://{0}.b2clogin.com/{1}/{2}/oauth2/v2.0/authorize?{3}" -f $tenantNa
 
 write-host "Starting Browser`n$url"
 
-[System.Diagnostics.Process]::Start("chrome.exe","--incognito --new-window $url")
+if ( !$isWinOS) {
+    [System.Diagnostics.Process]::Start("/usr/bin/open","$url")
+} else {
+    [System.Diagnostics.Process]::Start("chrome.exe","--incognito --new-window $url")
+}

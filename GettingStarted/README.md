@@ -2,6 +2,13 @@
 
 This github repo contains a set of powershell script that help you to quickly setup an Azure AD B2C tenant and Custom Policies. If you are to set up a B2C tenant, you need to follow the guide on how to [Create an Azure Active Directory B2C tenant](https://docs.microsoft.com/en-us/azure/active-directory-b2c/tutorial-create-tenant). This leaves you with a basic tenant, but in order to install the Custom Policies, described in the documentation page [Get started with custom policies in Azure Active Directory B2C](https://docs.microsoft.com/en-us/azure/active-directory-b2c/custom-policy-get-started?tabs=applications#custom-policy-starter-pack), there are quite a few steps to complete. Although it is not complicated, it takes some time and involves som copy-n-pase, flickering between documentation pages, before you can test your first login. The powershell scripts in this repo are created with the aim of minimizing the time from setting up a B2C tenant to your first login.
 
+## Update
+The scripts have been updated to support running on Mac/Linux. In order to run them on MacOS, you need to install both Azure CLI and Powershell Core, then start the powershell command prompt with the pwsh command.
+
+Install [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-macos) on MacOS.
+
+Install [Powershell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-macos?view=powershell-7) on MacOS.
+
 ## Summary
 
 With the scripts in this repository, you can create a fully functional B2C Custom Policy environment in seconds via the commands 
@@ -210,15 +217,10 @@ Tenant:         yourtenant.onmicrosoft.com
 TenantID:       91b..78
 Authenticating as App B2C-Graph-App, AppID 4b7...10
 Uploading policy B2C_1A_demo_TrustFrameworkBase...
-91b..78
 Uploading policy B2C_1A_demo_TrustFrameworkExtensions...
-91b..78
 Uploading policy B2C_1A_demo_PasswordReset...
-91b..78
 Uploading policy B2C_1A_demo_ProfileEdit...
-91b..78
 Uploading policy B2C_1A_demo_signup_signin...
-91b..78
 ```
 The script [aadb2c-upload-policy.ps1](aadb2c-upload-policy.ps1), which is responsible for uploading the B2C Custom Policies, is smart enough to look through the inheritance chain between the different xml files and will upload them in the correct order, ie start with Base, continue with Extensions and then the rest.
 

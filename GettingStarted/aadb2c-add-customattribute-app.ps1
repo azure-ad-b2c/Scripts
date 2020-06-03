@@ -2,14 +2,22 @@ param (
     [Parameter(Mandatory=$false)][Alias('p')][string]$PolicyPath = "",    
     [Parameter(Mandatory=$false)][Alias('c')][string]$client_id = "",    # client_id/AppId of the app handeling custom attributes
     [Parameter(Mandatory=$false)][Alias('a')][string]$objectId = "",     # objectId of the same app
-    [Parameter(Mandatory=$false)][Alias('n')][string]$AppDisplayName = ""     # objectId of the same app
+    [Parameter(Mandatory=$false)][Alias('n')][string]$AppDisplayName = "",     # objectId of the same app
+    [Parameter(Mandatory=$false)][Alias('f')][string]$PolicyFile = "TrustFrameworkExtensions.xml",     # if the Extensions file has a different name
+    [Parameter(Mandatory=$false)][boolean]$AzureCli = $False         # if to force Azure CLI on Windows
     )
-   
+
+if ( $env:PATH -imatch "/usr/bin" ) {                           # Mac/Linux
+  $isWinOS = $false
+} else {
+  $isWinOS = $true
+}
+      
 if ( "" -eq $PolicyPath ) {
     $PolicyPath = (get-location).Path
 }
     
-[xml]$ext =Get-Content -Path "$PolicyPath\TrustFrameworkExtensions.xml" -Raw
+[xml]$ext =Get-Content -Path "$PolicyPath/$PolicyFile" -Raw
 
 $tpId = "AAD-Common"
 $claimsProviderXml=@"
@@ -37,7 +45,11 @@ if ( $ext.TrustFrameworkPolicy.ClaimsProviders.InnerXml -imatch $tpId ) {
 if ( "" -eq $client_id ) {
     if ( "" -eq $AppDisplayName ) { $AppDisplayName = "b2c-extensions-app"}
     write-output "Using $AppDisplayName"
-    $appExt = Get-AzureADApplication -SearchString $AppDisplayName
+    if ( $False -eq $isWinOS -or $True -eq $AzureCli ) {
+      $appExt = (az ad app list --display-name $AppDisplayName | ConvertFrom-json)
+    } else {
+      $appExt = Get-AzureADApplication -SearchString $AppDisplayName
+    }
     $client_id = $appExt.AppId   
     $objectId = $appExt.objectId   
 }
@@ -48,4 +60,4 @@ $claimsProviderXml = $claimsProviderXml.Replace("{objectId}", $objectId)
 
 $ext.TrustFrameworkPolicy.ClaimsProviders.innerXml = $ext.TrustFrameworkPolicy.ClaimsProviders.innerXml + $claimsProviderXml
 
-$ext.Save("$PolicyPath\TrustFrameworkExtensions.xml")
+$ext.Save("$PolicyPath/TrustFrameworkExtensions.xml")

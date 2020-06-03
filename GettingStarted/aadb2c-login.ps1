@@ -1,7 +1,13 @@
 param (
-    [Parameter(Mandatory=$false)][Alias('t')][string]$Tenant = ""
+    [Parameter(Mandatory=$false)][Alias('t')][string]$Tenant = "",
+    [Parameter(Mandatory=$false)][boolean]$AzureCli = $False         # if to force Azure CLI on Windows
     )
 
+if ( $env:PATH -imatch "/usr/bin" ) {                           # Mac/Linux
+    $isWinOS = $false
+} else {
+    $isWinOS = $true
+}
 if ( $Tenant.Length -eq 36 -and $Tenant.Contains("-") -eq $true)  {
     $TenantID = $Tenant
 } else {
@@ -16,7 +22,17 @@ if ( $Tenant.Length -eq 36 -and $Tenant.Contains("-") -eq $true)  {
 
 $startTime = Get-Date
 
-$ctx = Connect-AzureAD -tenantid $TenantID
+if ( $False -eq $isWinOS -or $True -eq $AzureCli ) {
+    $ctx = (az login --tenant $Tenant --allow-no-subscriptions | ConvertFrom-json)
+    $Tenant = $ctx[0].tenantId
+    $user = $ctx[0].user.name
+    $type = "CLI"
+} else {                                                        # Windows
+    $ctx = Connect-AzureAD -tenantid $TenantID
+    $Tenant = $ctx.TenantDomain
+    $user = $ctx.Account.Id
+    $type = ""
+}
 
 $finishTime = Get-Date
 $TotalTime = ($finishTime - $startTime).TotalSeconds
@@ -24,4 +40,4 @@ Write-Output "Time: $TotalTime sec(s)"
 
 write-output $ctx
 
-$host.ui.RawUI.WindowTitle = "PS AAD - $($ctx.Account.Id) - $($ctx.TenantDomain)"
+$host.ui.RawUI.WindowTitle = "PS AAD $type - $user - $Tenant"

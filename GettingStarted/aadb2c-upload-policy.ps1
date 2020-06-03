@@ -1,13 +1,21 @@
 param (
     [Parameter(Mandatory=$false)][Alias('p')][string]$PolicyPath = "",
+    [Parameter(Mandatory=$false)][Alias('f')][string]$PolicyFile = "",
     [Parameter(Mandatory=$false)][Alias('t')][string]$TenantName = "",
     [Parameter(Mandatory=$false)][Alias('a')][string]$AppID = "",
-    [Parameter(Mandatory=$false)][Alias('k')][string]$AppKey = ""
+    [Parameter(Mandatory=$false)][Alias('k')][string]$AppKey = "",
+    [Parameter(Mandatory=$false)][boolean]$AzureCli = $False         # if to force Azure CLI on Windows
     )
 
 $oauth = $null
 if ( "" -eq $AppID ) { $AppID = $env:B2CAppId }
 if ( "" -eq $AppKey ) { $AppKey = $env:B2CAppKey }
+if ( "" -eq $TenantName ) { $TenantName = $global:TenantName }
+if ( $env:PATH -imatch "/usr/bin" ) {                           # Mac/Linux
+    $isWinOS = $false
+} else {
+    $isWinOS = $true
+}
 
 # enumerate all XML files in the specified folders and create a array of objects with info we need
 Function EnumPoliciesFromPath( [string]$PolicyPath ) {
@@ -61,22 +69,8 @@ Function UploadPolicy( [string]$PolicyId, [string]$PolicyData) {
 # either try and use the tenant name passed or grab the tenant from current session
 <##>
 $tenantID = ""
-if ( "" -eq $TenantName ) {
-    write-host "Getting Tenant info..."
-    $tenant = Get-AzureADTenantDetail
-    if ( $null -eq $tenant ) {
-        write-host "Not logged in to a B2C tenant"
-        exit 1
-    }
-    $tenantName = $tenant.VerifiedDomains[0].Name
-    $tenantID = $tenant.ObjectId
-} else {
-    if ( !($TenantName -imatch ".onmicrosoft.com") ) {
-        $TenantName = $TenantName + ".onmicrosoft.com"
-    }
-    $resp = Invoke-RestMethod -Uri "https://login.windows.net/$TenantName/v2.0/.well-known/openid-configuration"
-    $tenantID = $resp.authorization_endpoint.Split("/")[3]    
-}
+$resp = Invoke-RestMethod -Uri "https://login.windows.net/$TenantName/v2.0/.well-known/openid-configuration"
+$tenantID = $resp.authorization_endpoint.Split("/")[3]    
 <##>
 
 <##>
@@ -87,32 +81,43 @@ if ( "" -eq $tenantID ) {
 write-host "Tenant:  `t$tenantName`nTenantID:`t$tenantId"
 
 # check the B2C Graph App passed
-$app = Get-AzureADApplication -Filter "AppID eq '$AppID'"
+if ( $False -eq $isWinOS -or $True -eq $AzureCli ) {
+    $app = (az ad app show --id $AppID | ConvertFrom-json)
+} else {
+    $app = Get-AzureADApplication -Filter "AppID eq '$AppID'"
+}
 if ( $null -eq $app ) {
     write-host "App not found in B2C tenant: $AppID"
     exit 3
 } else {
     write-host "`Authenticating as App $($app.DisplayName), AppID $AppID"
 }
+
 <##>
 if ( "" -eq $PolicyPath ) {
     $PolicyPath = (get-location).Path
 }
-
-# load the XML Policy files
-$arr = EnumPoliciesFromPath $PolicyPath
 
 # https://docs.microsoft.com/en-us/azure/active-directory/users-groups-roles/directory-assign-admin-roles#b2c-user-flow-administrator
 # get an access token for the B2C Graph App
 $oauthBody  = @{grant_type="client_credentials";resource="https://graph.microsoft.com/";client_id=$AppID;client_secret=$AppKey;scope="Policy.ReadWrite.TrustFramework"}
 $oauth      = Invoke-RestMethod -Method Post -Uri "https://login.microsoft.com/$tenantName/oauth2/token?api-version=1.0" -Body $oauthBody
 
-# upload policies - start with those who have no BasePolicyId dependency (null)
-ProcessPolicies $arr $null     
-
-# check what hasn't been uploaded
-foreach( $p in $arr ) {
-    if ( $p.Uploaded -eq $false ) {
-        write-output "$($p.PolicyId) has a refence to $($p.BasePolicyId) which doesn't exists in the folder - not uploaded"
+if ( "" -ne $PolicyFile ) {
+    # upload a single file
+    $PolicyData = Get-Content $PolicyFile # 
+    [xml]$xml = $PolicyData
+    UploadPolicy $xml.TrustFrameworkPolicy.PolicyId $PolicyData
+} else {
+    # load the XML Policy files
+    $arr = EnumPoliciesFromPath $PolicyPath
+    # upload policies - start with those who have no BasePolicyId dependency (null)
+    ProcessPolicies $arr $null     
+    # check what hasn't been uploaded
+    foreach( $p in $arr ) {
+        if ( $p.Uploaded -eq $false ) {
+            write-output "$($p.PolicyId) has a refence to $($p.BasePolicyId) which doesn't exists in the folder - not uploaded"
+        }
     }
 }
+

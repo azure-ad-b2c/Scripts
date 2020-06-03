@@ -10,7 +10,7 @@ $urlStarterPackBase = "https://raw.githubusercontent.com/Azure-Samples/active-di
 function DownloadFile ( $Url, $LocalPath ) {
     $p = $Url -split("/")
     $filename = $p[$p.Length-1]
-    $LocalFile = "$LocalPath\$filename"
+    $LocalFile = "$LocalPath/$filename"
     Write-Host "Downloading $Url to $LocalFile"
     $webclient = New-Object System.Net.WebClient
     $webclient.DownloadFile($Url,$LocalFile)
