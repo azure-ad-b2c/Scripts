@@ -92,7 +92,7 @@ write-host "AppID`t`t$($sp.AppId)`nObjectID:`t$($sp.ObjectID)"
 write-host "`nCreating App Key / Secret / client_secret - please remember this value and keep it safe"
 $AppSecret = New-AzureADApplicationPasswordCredential -ObjectId $App.ObjectID
 
-write-output "Copy-n-paste this to your b2cAppSettings.json file `
+write-output "Copy and paste this to your b2cAppSettings.json file `
 `"ClientCredentials`": { `
     `"client_id`": `"$($App.AppId)`", `
     `"client_secret`": `"$($AppSecret.Value)`" `
@@ -103,4 +103,4 @@ $env:B2CAppId=$App.AppId
 write-output "setting ENVVAR B2CAppKey=$($AppSecret.Value)"
 $env:B2CAppKey=$AppSecret.Value
 
-write-output "Remeber to go to portal.azure.com for the app and Grant Permissions"
+write-output "Remember to go to portal.azure.com for the app and Grant Permissions"
