@@ -48,19 +48,24 @@ foreach( $contDef in $cdefs.ContentDefinition ) {
         $url = "https://$tenantShortName.b2clogin.com/static" + $contDef.LoadUri.Replace("~", "")
         DownloadFile $url "$PolicyPath\html"
     }
-    if ( "" -ne $UxCustUrlBase ) {
+    if ( "" -ne $urlBaseUx ) {
         $p = $contDef.LoadUri -split("/")
         $filename = $p[$p.Length-1]
         $contDef.LoadUri = "$urlBaseUx/$filename"
     }
 }
 
+if ( $null -ne $ext.TrustFrameworkPolicy.BuildingBlocks.ContentDefinitions ) {
+    $ext.TrustFrameworkPolicy.BuildingBlocks.RemoveChild( $ext.TrustFrameworkPolicy.BuildingBlocks.ContentDefinitions )
+}
 <##>
 $ext.TrustFrameworkPolicy.InnerXml = $ext.TrustFrameworkPolicy.InnerXml.Replace("</BuildingBlocks>", "<ContentDefinitions>" + $cdefs.InnerXml + "</ContentDefinitions></BuildingBlocks>")
 $ext.Save("$PolicyPath\TrustFrameworkExtensions.xml")
 
 <##>
-[xml]$rp =Get-Content -Path "$PolicyPath\$RelyingPartyFileName" -Raw
-$rp.TrustFrameworkPolicy.RelyingParty.InnerXml = $rp.TrustFrameworkPolicy.RelyingParty.InnerXml.Replace("<TechnicalProfile", "<UserJourneyBehaviors><ScriptExecution>Allow</ScriptExecution></UserJourneyBehaviors><TechnicalProfile")
-$rp.Save("$PolicyPath\$RelyingPartyFileName")
+if ( "" -ne $RelyingPartyFileName ) {
+    [xml]$rp =Get-Content -Path "$PolicyPath\$RelyingPartyFileName" -Raw
+    $rp.TrustFrameworkPolicy.RelyingParty.InnerXml = $rp.TrustFrameworkPolicy.RelyingParty.InnerXml.Replace("<TechnicalProfile", "<UserJourneyBehaviors><ScriptExecution>Allow</ScriptExecution></UserJourneyBehaviors><TechnicalProfile")
+    $rp.Save("$PolicyPath\$RelyingPartyFileName")
+}
 <##>
