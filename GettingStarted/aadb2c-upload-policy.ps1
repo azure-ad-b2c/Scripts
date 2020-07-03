@@ -26,14 +26,16 @@ Function EnumPoliciesFromPath( [string]$PolicyPath ) {
         $PolicyFile = (Join-Path -Path $PolicyPath -ChildPath $file)
         $PolicyData = Get-Content $PolicyFile
         [xml]$xml = $PolicyData
-        $policy = New-Object System.Object
-        $policy | Add-Member -type NoteProperty -name "PolicyId" -Value $xml.TrustFrameworkPolicy.PolicyId
-        $policy | Add-Member -type NoteProperty -name "BasePolicyId" -Value $xml.TrustFrameworkPolicy.BasePolicy.PolicyId
-        $policy | Add-Member -type NoteProperty -name "Uploaded" -Value $false
-        $policy | Add-Member -type NoteProperty -name "FilePath" -Value $PolicyFile
-        $policy | Add-Member -type NoteProperty -name "xml" -Value $xml
-        $policy | Add-Member -type NoteProperty -name "PolicyData" -Value $PolicyData
-        $arr += $policy
+        if ($null -ne $xml.TrustFrameworkPolicy) {
+            $policy = New-Object System.Object
+            $policy | Add-Member -type NoteProperty -name "PolicyId" -Value $xml.TrustFrameworkPolicy.PolicyId
+            $policy | Add-Member -type NoteProperty -name "BasePolicyId" -Value $xml.TrustFrameworkPolicy.BasePolicy.PolicyId
+            $policy | Add-Member -type NoteProperty -name "Uploaded" -Value $false
+            $policy | Add-Member -type NoteProperty -name "FilePath" -Value $PolicyFile
+            $policy | Add-Member -type NoteProperty -name "xml" -Value $xml
+            $policy | Add-Member -type NoteProperty -name "PolicyData" -Value $PolicyData
+            $arr += $policy
+        }
     }
     return $arr
 }
