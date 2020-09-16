@@ -1,0 +1,57 @@
+﻿@model SetupState
+@{
+    ViewData["Title"] = "Setup results";
+}
+
+    <div class="text-center">
+        <h1 class="display-4">Setup results</h1>
+
+        <table class="table table-bordered table-responsive table-hover">
+            <tr>
+                <th>Name</th>
+                <th>Id</th>
+                <th>Status</th>
+            </tr>
+            @foreach (var d in Model.Items)
+            {
+                <tr>
+                    <td>@d.Name</td>
+                    <td>@d.Id</td>
+                    <td>@d.Status</td>
+                </tr>
+            }
+        </table>
+     </div>
+    <div class="text-left">
+        <p class="text-justify">The above IEF applications (resource: IdentityExperienceFramework and client: ProxyIdentityExperienceFramework) need an admin consent before 
+        they can be used by IEF policies. You can provide this this consent through the <a href="https://portal.azure.com">Azure portal</a> or by
+        <a href=@Model.ConsentUrl>requesting an OIDC signin to the client app.</a> You will be asked to sign in (make sure to use an admin account) and 
+        then consent to the IEF client app getting a token to the resource app. You will be then redirected to a non-existent page - client app
+            has no valid reply url. You can ignore that - consent has already been recorded.
+        </p>
+
+        <p>Use the following snippets with
+        <a href="https://github.com/mrochon/b2cief-upload"> the PowerShell policy upload tool.</a></p>
+        <h4>Json configuration file</h4>
+        <pre>
+{
+    "ExtAppId": "@Model.Items[4].Id",
+    "ExtObjectId": "@Model.Items[5].Id"
+}
+        </pre>
+        <br/>
+        <h4>Extensions.xml claims provider source</h4>
+        <pre>
+&ltDisplayName&gtAzure Active Directory&lt/DisplayName&gt
+    &ltTechnicalProfiles&gt
+        &ltTechnicalProfile Id="AAD-Common"&gt
+            &ltDisplayName&gtAzure Active Directory&lt/DisplayName&gt
+            &ltMetadata&gt
+                &ltItem Key="ApplicationObjectId"&gt{ExtObjectId}&lt/Item&gt
+                &ltItem Key="ClientId"&gt{ExtAppId}&lt/Item&gt
+            &lt/Metadata&gt
+		&lt/TechnicalProfile&gt
+	&lt/TechnicalProfiles&gt			
+&lt/ClaimsProvider&gt
+        </pre>
+    </div>
