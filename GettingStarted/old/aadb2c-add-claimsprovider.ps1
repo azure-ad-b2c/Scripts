@@ -1,6 +1,6 @@
 param (
     [Parameter(Mandatory=$false)][Alias('p')][string]$PolicyPath = "",    
-    [Parameter(Mandatory=$true)][Alias('i')][string]$IdpName = "",    # google, twitter, amazon, linkedid, AzureAD
+    [Parameter(Mandatory=$true)][Alias('i')][string]$ProviderName = "",    # google, twitter, amazon, linkedid, AzureAD
     [Parameter(Mandatory=$false)][Alias('c')][string]$client_id = "",    # client_id/AppId o the IdpName
     [Parameter(Mandatory=$false)][Alias('a')][string]$AadTenantName = ""    # contoso.com or contoso
     )
@@ -10,11 +10,11 @@ if ( "" -eq $PolicyPath ) {
 }
     
 if ( "" -eq $client_id ) {
-  $client_id = ($global:b2cAppSettings.ClaimsProviders | where {$_.Name -eq $IdpName }).client_id
+  $client_id = ($global:b2cAppSettings.ClaimsProviders | where {$_.Name -eq $ProviderName }).client_id
 }
 
-if ( "" -eq $AadTenantName -and "azuread" -eq $IdpName.ToLower() ) {
-  $AadTenantName = ($global:b2cAppSettings.ClaimsProviders | where {$_.Name -eq $IdpName }).DomainName
+if ( "" -eq $AadTenantName -and "azuread" -eq $ProviderName.ToLower() ) {
+  $AadTenantName = ($global:b2cAppSettings.ClaimsProviders | where {$_.Name -eq $ProviderName }).DomainName
 }
 
 [xml]$base =Get-Content -Path "$PolicyPath/TrustFrameworkBase.xml" -Raw
@@ -291,7 +291,7 @@ $tpId = ""
 $claimsExchangeId=""
 $claimsProviderXml=""
 
-switch ( $IdpName.ToLower() ) {
+switch ( $ProviderName.ToLower() ) {
   "google" { $tpId = "Google-OAUTH"; $claimsExchangeId="GoogleExchange"; $claimsProviderXml = $googleCP }
   "twitter" { $tpId = "Twitter-OAUTH1"; $claimsExchangeId="TwitterExchange"; $claimsProviderXml = $twitterCP }
   "linkedin" { $tpId = "LinkedIn-OAUTH"; $claimsExchangeId="LinkedinExchange"; $claimsProviderXml = $linkedinCP }
@@ -328,7 +328,7 @@ if ( $ext.TrustFrameworkPolicy.ClaimsProviders.InnerXml -imatch $tpId ) {
 write-output "Adding TechnicalProfileId $tpId"
 
 $claimsProviderXml = $claimsProviderXml.Replace("{client_id}", $client_id)
-if ( "azuread" -eq $IdpName.ToLower() ) {
+if ( "azuread" -eq $ProviderName.ToLower() ) {
   $claimsProviderXml = $claimsProviderXml.Replace("{tpId}", $tpId)
   $claimsProviderXml = $claimsProviderXml.Replace("{AadTenantName}", $AadTenantName)
   $claimsProviderXml = $claimsProviderXml.Replace("{AadTenantDisplayName}", $AadTenantDisplayName)

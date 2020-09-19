@@ -1,0 +1,13 @@
+#
+demo*/
+tmp/
+other/
+
+# 
+*.pfx
+*.cer
+*.txt
+
+#
+b2cAppSettings_*.json
+

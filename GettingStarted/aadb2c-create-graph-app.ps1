@@ -1,11 +1,14 @@
 param (
-    [Parameter(Mandatory=$false)][Alias('n')][string]$DisplayName = "B2C-Graph-App"
+    [Parameter(Mandatory=$false)][Alias('n')][string]$DisplayName = "B2C-Graph-App",
+    [Parameter(Mandatory=$false)][boolean]$AzureCli = $False         # if to force Azure CLI on Windows
     )
 
-write-host "Getting Tenant info..."
-$tenant = Get-AzureADTenantDetail
-$tenantName = $tenant.VerifiedDomains[0].Name
-write-host "$tenantName`n$($tenant.ObjectId)"
+$isWinOS = ($env:PATH -imatch "/usr/bin" )                 # Mac/Linux
+if ( $isWinOS ) { $AzureCLI = $True}
+
+$tenantName = $global:tenantName
+$tenantID = $global:tenantID
+write-host "$tenantName`n$($tenantId)"
 
 # 00000003 == MSGraph, 00000002 == AADGraph
 $requiredResourceAccess=@"
@@ -71,36 +74,62 @@ $requiredResourceAccess=@"
 ]
 "@ | ConvertFrom-json
 
-$reqAccess=@()
-foreach( $resApp in $requiredResourceAccess ) {
-    $req = New-Object -TypeName "Microsoft.Open.AzureAD.Model.RequiredResourceAccess"
-    $req.ResourceAppId = $resApp.resourceAppId
-    foreach( $ra in $resApp.resourceAccess ) {
-        $req.ResourceAccess += New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList $ra.Id,$ra.type
-    }
-    $reqAccess += $req
-}
-
 write-host "`nCreating WebApp $DisplayName..."
-$app = New-AzureADApplication -DisplayName $DisplayName -IdentifierUris "http://$TenantName/$DisplayName" -ReplyUrls @("https://$DisplayName") -RequiredResourceAccess $reqAccess
-write-output "AppID`t`t$($app.AppId)`nObjectID:`t$($App.ObjectID)"
 
-write-host "`nCreating ServicePrincipal..."
-$sp = New-AzureADServicePrincipal -AccountEnabled $true -AppId $App.AppId -AppRoleAssignmentRequired $false -DisplayName $DisplayName 
-write-host "AppID`t`t$($sp.AppId)`nObjectID:`t$($sp.ObjectID)"
+if ( $False -eq $AzureCli ) {
+    $reqAccess=@()
+    foreach( $resApp in $requiredResourceAccess ) {
+        $req = New-Object -TypeName "Microsoft.Open.AzureAD.Model.RequiredResourceAccess"
+        $req.ResourceAppId = $resApp.resourceAppId
+        foreach( $ra in $resApp.resourceAccess ) {
+            $req.ResourceAccess += New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList $ra.Id,$ra.type
+        }
+        $reqAccess += $req
+    }
+    $app = New-AzureADApplication -DisplayName $DisplayName -IdentifierUris "http://$TenantName/$DisplayName" -ReplyUrls @("https://$DisplayName") -RequiredResourceAccess $reqAccess
+    write-output "AppID`t`t$($app.AppId)`nObjectID:`t$($App.ObjectID)"
 
-write-host "`nCreating App Key / Secret / client_secret - please remember this value and keep it safe"
-$AppSecret = New-AzureADApplicationPasswordCredential -ObjectId $App.ObjectID
+    write-host "`nCreating ServicePrincipal..."
+    $sp = New-AzureADServicePrincipal -AccountEnabled $true -AppId $App.AppId -AppRoleAssignmentRequired $false -DisplayName $DisplayName 
+    write-host "AppID`t`t$($sp.AppId)`nObjectID:`t$($sp.ObjectID)"
+
+    write-host "`nCreating App Key / Secret / client_secret - please remember this value and keep it safe"
+    $AppSecret = New-AzureADApplicationPasswordCredential -ObjectId $App.ObjectID
+    $AppSecretValue = $AppSecret.Value
+} else {
+    $AppSecretValue = (New-Guid).Guid.ToString()
+
+    $app = (az ad app create --display-name $DisplayName --password $AppSecretValue --identifier-uris "http://$TenantName/$DisplayName" --reply-urls "https://$DisplayName" | ConvertFrom-json)
+    write-output "AppID`t`t$($app.AppId)`nObjectID:`t$($App.ObjectID)"
+
+    write-host "`nCreating ServicePrincipal..."
+    $sp = (az ad sp create --id $app.appId | ConvertFrom-json)
+    write-host "AppID`t`t$($sp.AppId)`nObjectID:`t$($sp.ObjectID)"
+
+    foreach( $resApp in $requiredResourceAccess ) {
+        $rApp = (az ad sp list --filter "appId eq '$($resApp.resourceAppId)'" | ConvertFrom-json)
+        $rApp.DisplayName
+        foreach( $ra in $resApp.resourceAccess ) {
+            $ret = (az ad app permission add --id $sp.appId --api $resApp.resourceAppId --api-permissions "$($ra.Id)=$($ra.type)")
+            if ( "Scope" -eq $ra.type) {
+                $perm = ($rApp.oauth2Permissions | where { $_.id -eq "$($ra.Id)"})
+            } else {
+                $perm = ($rApp.appRoles | where { $_.id -eq "$($ra.Id)"})
+            }
+            $perm.Value
+        }        
+    }
+    az ad app permission admin-consent --id $sp.appId 
+}
 
 write-output "Copy-n-paste this to your b2cAppSettings.json file `
 `"ClientCredentials`": { `
     `"client_id`": `"$($App.AppId)`", `
-    `"client_secret`": `"$($AppSecret.Value)`" `
+    `"client_secret`": `"$($AppSecretValue)`" `
 },"
 
 write-output "setting ENVVAR B2CAppID=$($App.AppId)"
 $env:B2CAppId=$App.AppId
-write-output "setting ENVVAR B2CAppKey=$($AppSecret.Value)"
-$env:B2CAppKey=$AppSecret.Value
+write-output "setting ENVVAR B2CAppKey=$($AppSecretValue)"
+$env:B2CAppKey=$AppSecretValue
 
-write-output "Remeber to go to portal.azure.com for the app and Grant Permissions"
