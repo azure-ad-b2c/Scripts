@@ -370,6 +370,7 @@ function Set-AzureADB2CCustomizeUX
     [Parameter(Mandatory=$false)][Alias('b')][string]$BasePolicyFileName = "TrustFrameworkBase.xml",
     [Parameter(Mandatory=$false)][Alias('e')][string]$ExtPolicyFileName = "TrustFrameworkExtensions.xml",
     [Parameter(Mandatory=$false)][Alias('d')][boolean]$DownloadHtmlTemplates = $false,    
+    [Parameter(Mandatory=$false)][Alias('h')][string]$HtmlFolderName = "html",    
     [Parameter(Mandatory=$false)][Alias('u')][string]$urlBaseUx = ""
     )
 {
@@ -396,7 +397,7 @@ function Set-AzureADB2CCustomizeUX
     $cdefs = $base.TrustFrameworkPolicy.BuildingBlocks.ContentDefinitions.Clone()
     
     if ( $true -eq $DownloadHtmlTemplates) {    
-        $ret = New-Item -Path $PolicyPath -Name "html" -ItemType "directory" -ErrorAction SilentlyContinue
+        $ret = New-Item -Path $PolicyPath -Name "$HtmlFolderName" -ItemType "directory" -ErrorAction SilentlyContinue
     }
     <##>
     foreach( $contDef in $cdefs.ContentDefinition ) {    
@@ -415,7 +416,7 @@ function Set-AzureADB2CCustomizeUX
         }  
         if ( $true -eq $DownloadHtmlTemplates) {
             $url = "https://$tenantShortName.b2clogin.com/static" + $contDef.LoadUri.Replace("~", "")
-            DownloadFile $url "$PolicyPath\html"
+            DownloadFile $url "$PolicyPath\$HtmlFolderName"
         }
         if ( "" -ne $urlBaseUx ) {
             $p = $contDef.LoadUri -split("/")
@@ -429,12 +430,17 @@ function Set-AzureADB2CCustomizeUX
     }
     <##>
     $ext.TrustFrameworkPolicy.InnerXml = $ext.TrustFrameworkPolicy.InnerXml.Replace("</BuildingBlocks>", "<ContentDefinitions>" + $cdefs.InnerXml + "</ContentDefinitions></BuildingBlocks>")
-    $ext.Save("$PolicyPath\TrustFrameworkExtensions.xml")
+    $ext.Save("$PolicyPath\$ExtPolicyFileName")
     
     <##>
     if ( "" -ne $RelyingPartyFileName ) {
         [xml]$rp =Get-Content -Path "$PolicyPath\$RelyingPartyFileName" -Raw
-        $rp.TrustFrameworkPolicy.RelyingParty.InnerXml = $rp.TrustFrameworkPolicy.RelyingParty.InnerXml.Replace("<TechnicalProfile", "<UserJourneyBehaviors><ScriptExecution>Allow</ScriptExecution></UserJourneyBehaviors><TechnicalProfile")
+        # don't have UserJourneyBehaviors - add it directly after DefaultUserJourney element
+        if ( $null -eq $rp.TrustFrameworkPolicy.RelyingParty.UserJourneyBehaviors ) {
+            $rp.TrustFrameworkPolicy.RelyingParty.InnerXml = $rp.TrustFrameworkPolicy.RelyingParty.InnerXml.Replace("<TechnicalProfile", "<UserJourneyBehaviors><ScriptExecution>Allow</ScriptExecution></UserJourneyBehaviors><TechnicalProfile")
+        } else {
+            $rp.TrustFrameworkPolicy.RelyingParty.InnerXml = $rp.TrustFrameworkPolicy.RelyingParty.InnerXml.Replace("</UserJourneyBehaviors>", "<ScriptExecution>Allow</ScriptExecution></UserJourneyBehaviors>")
+        }
         $rp.Save("$PolicyPath\$RelyingPartyFileName")
     }
     <##>    
