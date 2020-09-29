@@ -1,0 +1,34 @@
+﻿@model  SetupRequest
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+    <div class="text-center">
+        <h1 class="display-4">Welcome</h1>
+    </div>
+    <div class="text-left">
+        <p>
+            This app can be used to populate your AzureAD B2C tenant with objects needed for developing
+            <a href="https://docs.microsoft.com/en-us/azure/active-directory-b2c/custom-policy-get-started?tabs=applications">custom Identity Experience Framework policies</a>.
+        </p>
+        <p>Basic operation:</p>
+        <ol>
+            <li>Enter your B2C domain name</li>
+            <li>You will be asked to signin. Make sure to sign in with an account with admin rights to the B2C tenant. <b>At this stage, do not use an MSA
+            account to sign in. Use only work/school or local (to the B2C tenant: xyz@tenant.onmicrosoft.com) account.</b></li>
+            <li>
+                You will asked to consent to a number of permissions needed to create applications, service principals and security keys in your tenant.
+                You will need to consent for the app to complete the setup.
+            </li>
+            <li>The application will verify existence of or create the two applications and signing/encryption keys as per above document</li>
+            <li>The application will display the names, guids and status of the objects once completed.</li>
+            <li>The application will <b>not</b> create the Facebook IdP provider used by some starter policies. Follow <a href="https://docs.microsoft.com/en-us/azure/active-directory-b2c/custom-policy-get-started?tabs=applications#create-the-facebook-key">this document</a> if you need it.</li>
+        </ol>
+        <form asp-action="Index" asp-controller="Home">
+            <label asp-for="DomainName"></label>
+            <p><input asp-for="DomainName" placeholder="yourdomain" style="text-align: right" />.onmicrosoft.com</p>
+            <p><label asp-for="ValidateOnly"></label>
+                <input asp-for="ValidateOnly" /></p>
+            <input type="submit" />
+        </form>
+    </div>
