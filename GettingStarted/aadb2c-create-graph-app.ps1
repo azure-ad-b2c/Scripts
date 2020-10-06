@@ -16,43 +16,46 @@ $requiredResourceAccess=@"
     {
         "resourceAppId": "00000003-0000-0000-c000-000000000000",
         "resourceAccess": [
-            {
-                "id": "cefba324-1a70-4a6e-9c1d-fd670b7ae392",
-                "type": "Scope"
-            },
-            {
-                "id": "9a5d68dd-52b0-4cc2-bd40-abcf44ac3a30",
-                "type": "Role"
-            },
-            {
-                "id": "1bfefb4e-e0b5-418b-a88f-73c46d2cc8e9",
-                "type": "Role"
-            },
-            {
-                "id": "7ab1d382-f21e-4acd-a863-ba3e13f7da61",
-                "type": "Role"
-            },
-            {
-                "id": "19dbc75e-c2e2-444c-a770-ec69d8559fc7",
-                "type": "Role"
-            },
-            {
-                "id": "246dd0d5-5bd0-4def-940b-0421030a5b68",
-                "type": "Role"
-            },
-            {
-                "id": "79a677f7-b79d-40d0-a36a-3e6f8688dd7a",
-                "type": "Role"
-            },
-            {
-                "id": "fff194f1-7dce-4428-8301-1badb5518201",
-                "type": "Role"
-            },
-            {
-                "id": "4a771c9a-1cf2-4609-b88e-3d3e02d539cd",
-                "type": "Role"
-            }
-        ]
+                {
+					"id": "cefba324-1a70-4a6e-9c1d-fd670b7ae392",
+					"type": "Scope"
+				},
+				{
+					"id": "19dbc75e-c2e2-444c-a770-ec69d8559fc7",
+					"type": "Role"
+				},
+				{
+					"id": "62a82d76-70ea-41e2-9197-370581804d09",
+					"type": "Role"
+				},
+				{
+					"id": "5b567255-7703-4780-807c-7be8301ae99b",
+					"type": "Role"
+				},
+				{
+					"id": "1bfefb4e-e0b5-418b-a88f-73c46d2cc8e9",
+					"type": "Role"
+				},
+				{
+					"id": "df021288-bdef-4463-88db-98f22de89214",
+					"type": "Role"
+				},
+				{
+					"id": "246dd0d5-5bd0-4def-940b-0421030a5b68",
+					"type": "Role"
+				},
+				{
+					"id": "79a677f7-b79d-40d0-a36a-3e6f8688dd7a",
+					"type": "Role"
+				},
+				{
+					"id": "fff194f1-7dce-4428-8301-1badb5518201",
+					"type": "Role"
+				},
+				{
+					"id": "4a771c9a-1cf2-4609-b88e-3d3e02d539cd",
+					"type": "Role"
+				}        ]
     },
     {
         "resourceAppId": "00000002-0000-0000-c000-000000000000",

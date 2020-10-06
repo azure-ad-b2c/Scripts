@@ -52,7 +52,9 @@ Copy-n-paste the json output for "ClientCredentials" and update the b2cAppSettin
 
 ### 5. Create Custom Policy Keys
 
-In the [create your B2C tenant](https://docs.microsoft.com/en-us/azure/active-directory-b2c/tutorial-create-tenant) documentation, it describes that you need to create your token encryption and signing keys. This isn't the most tedious job and doing it by hand is quite fast, but if you want to automate it, the following two lines will do it for you. 
+In the [custom policy get started](https://docs.microsoft.com/en-us/azure/active-directory-b2c/custom-policy-get-started#add-signing-and-encryption-keys) documentation, it describes that you need to create your token encryption and signing keys. This isn't the most tedious job and doing it by hand is quite fast, but if you want to automate it, the following two lines will do it for you. 
+
+If you **haven't** created these two keys in the portal already, you can create them by running the below command. If you **have** created them, skip this.
 
 ```Powershell
 New-AzureADB2CPolicyKey -KeyContainerName "B2C_1A_TokenSigningKeyContainer" -KeyType "RSA" -KeyUse "sig"
@@ -61,17 +63,23 @@ New-AzureADB2CPolicyKey -KeyContainerName "B2C_1A_TokenEncryptionKeyContainer" -
 
 ### 6. Create the Custom Policy apps IdentityExperienceFramework and ProxyIdentityExperienceFramework
 
+In the [custom policy get started](https://docs.microsoft.com/en-us/azure/active-directory-b2c/custom-policy-get-started#register-identity-experience-framework-applications) documentation, it describes that you need to register two applications to sign up and sign in local accounts. If you **haven't** registered these two apps in the portal already, you can do that by running the below command. If you **have** registered them, skip this.
+
 ```Powershell
 New-AzureADB2CIdentityExperienceFrameworkApps
 ```
 
 ### 7. Create an App Registration for a test webapp that accepts https://jwt.ms as redirectUri
 
-To test the Custom Policy you need to register a dummy webapp in the portal that you can use. This is described in the tutorial for how to register an app and can be found here under section [Register a web application](https://docs.microsoft.com/en-us/azure/active-directory-b2c/tutorial-register-applications?tabs=app-reg-preview#register-a-web-application).
+To test the Custom Policy you need to register a dummy webapp in the portal that you can use. This is described in the tutorial for how to register an app and can be found here under section [Register a web application](https://docs.microsoft.com/en-us/azure/active-directory-b2c/tutorial-register-applications?tabs=app-reg-preview#register-a-web-application). The script will register a WebApp in your B2C tenant that redirects to http://jwt.ms. 
 
 ```Powershell
 New-AzureADB2CTestApp -n "Test-WebApp"
 ```
+
+This command may fail on granting permissions. This will happen if you haven't given your graph app (the one you created above with aadb2c-create-graph-app.ps1) the permission Directory.ReadWrite.All. In that case, go to portal.azure.com and manually grant the app the permissions.
+
+If the graph app do not have the Application.ReadWrite.All permission, it will fail updating the manifest settings and you are better of deleting the app and to redo this step after you have given the graph app the Application.ReadWrite.All permission.
 
 ### 8. Create Facebook secret
 
@@ -104,14 +112,20 @@ Connect-AzureADB2CEnv -t "yourtenant"
 ## The easy way - New-AzureADB2CPolicyProject
 The cmdlet ***New-AzureADB2CPolicyProject*** is a wrapper that will execute the following cmdlets if you prefer to quickly get going and accept all defaults.
 
+So by running this command
 ```powershell
-    Get-AzureADB2CStarterPack -PolicyPath $PolicyPath
-    Set-AzureADB2CPolicyDetails -TenantName $TenantName -PolicyPath $PolicyPath -PolicyPrefix $PolicyPrefix
-    Set-AzureADB2CCustomAttributeApp -PolicyPath $PolicyPath
-    Set-AzureADB2CAppInsights -PolicyPath $PolicyPath
-    Set-AzureADB2CCustomizeUX -PolicyPath $PolicyPath
+New-AzureADB2CPolicyProject -PolicyPrefix "demo"
 ```
-After you have run ***New-AzureADB2CPolicyProject***, you can directly push them to your tenant and test them.  
+
+you are effectivly executing this sequence of commands, which means you will download the Starter Pack, change it to work against your tenant, add b2c-extensions-app as the app for custom attributes, add AppInsight instrumentation and switch to version 1.2.0 of the UX so you are ready to go ***if*** you decide you need javascript later.
+```powershell
+    Get-AzureADB2CStarterPack 
+    Set-AzureADB2CPolicyDetails -PolicyPrefix "X2"
+    Set-AzureADB2CCustomAttributeApp 
+    Set-AzureADB2CAppInsights 
+    Set-AzureADB2CCustomizeUX 
+```
+After you have run ***New-AzureADB2CPolicyProject***, you can directly push them to your tenant and test them (see Push-AzureADB2CPolicyToTenant below)
 
 ## Download the Custom Policy Starter Pack and modify them to your tenant
 
