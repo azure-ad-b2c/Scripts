@@ -42,9 +42,10 @@ Connect-AzureADB2CEnv -t "yourtenant"
 ### 3. Create a App Registration that can be used for authenticating via Client Credentials
 
 ```Powershell
-.\aadb2c-create-graph-app.ps1 -n "B2C-Graph-App"
+.\aadb2c-create-graph-app.ps1 -n "B2C-Graph-App" -CreateConfigFile
 ```
-Copy-n-paste the json output for "ClientCredentials" and update the b2cAppSettings.json file. Update the tenant name in b2cAppSettings.json too.
+
+The `-CreateConfigFile` switch will create a file named `b2cAppSettings_yourtenant.json` and copy in the AppID (client_id) and key (client_secret) into the file. If you don't pass the switch, you have to copy-n-paste the json output for "ClientCredentials" and update the b2cAppSettings.json file. Update the tenant name in b2cAppSettings.json too.
 
 ### 4. Find the ***B2C-Graph-App*** in [https://portal.azure.com/yourtenant.onmicrosoft.com](https://portal.azure.com/yourtenant.onmicrosoft.com) and grant admin consent under API permissions
 

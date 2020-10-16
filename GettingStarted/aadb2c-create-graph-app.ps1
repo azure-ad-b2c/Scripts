@@ -1,6 +1,7 @@
 param (
     [Parameter(Mandatory=$false)][Alias('n')][string]$DisplayName = "B2C-Graph-App",
-    [Parameter(Mandatory=$false)][boolean]$AzureCli = $False         # if to force Azure CLI on Windows
+    [Parameter(Mandatory=$false)][boolean]$AzureCli = $False,         # if to force Azure CLI on Windows
+    [Parameter(Mandatory=$false)][switch]$CreateConfigFile = $False
     )
 
 $isWinOS = ($env:PATH -imatch "/usr/bin" )                 # Mac/Linux
@@ -125,14 +126,24 @@ if ( $False -eq $AzureCli ) {
     az ad app permission admin-consent --id $sp.appId 
 }
 
-write-output "Copy-n-paste this to your b2cAppSettings.json file `
-`"ClientCredentials`": { `
-    `"client_id`": `"$($App.AppId)`", `
-    `"client_secret`": `"$($AppSecretValue)`" `
-},"
-
 write-output "setting ENVVAR B2CAppID=$($App.AppId)"
 $env:B2CAppId=$App.AppId
 write-output "setting ENVVAR B2CAppKey=$($AppSecretValue)"
 $env:B2CAppKey=$AppSecretValue
 
+if ( $CreateConfigFile ) {
+    $path = (get-location).Path
+    $cfg = (Get-Content "$path\b2cAppSettings.json" | ConvertFrom-json)
+    $cfg.ClientCredentials.client_id = $App.AppId
+    $cfg.ClientCredentials.client_secret = $AppSecretValue
+    $cfg.TenantName = $tenantName
+    $ConfigFile = "$path\b2cAppSettings_" + $tenantName.split(".")[0] + ".json"
+    Set-Content -Path $ConfigFile -Value ($cfg | ConvertTo-json) 
+    write-output "Saved to config file $ConfigFile"
+} else {
+    write-output "Copy-n-paste this to your b2cAppSettings.json file `
+    `"ClientCredentials`": { `
+        `"client_id`": `"$($App.AppId)`", `
+        `"client_secret`": `"$($AppSecretValue)`" `
+    },"
+}

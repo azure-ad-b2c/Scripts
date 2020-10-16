@@ -34,11 +34,12 @@ function New-AzureADB2CPolicyProject
 (
     [Parameter(Mandatory=$false)][Alias('t')][string]$TenantName = "",
     [Parameter(Mandatory=$false)][Alias('p')][string]$PolicyPath = "",
+    [Parameter(Mandatory=$false)][Alias('b')][string]$PolicyType = "SocialAndLocalAccounts",
     [Parameter(Mandatory=$false)][Alias('x')][string]$PolicyPrefix = "",
     [Parameter(Mandatory=$false)][boolean]$AzureCli = $False         # if to force Azure CLI on Windows
     )
 {
-    Get-AzureADB2CStarterPack -PolicyPath $PolicyPath
+    Get-AzureADB2CStarterPack -PolicyPath $PolicyPath -PolicyType $PolicyType
     Set-AzureADB2CPolicyDetails -TenantName $TenantName -PolicyPath $PolicyPath -PolicyPrefix $PolicyPrefix
     Set-AzureADB2CCustomAttributeApp -PolicyPath $PolicyPath
     Set-AzureADB2CAppInsights -PolicyPath $PolicyPath
