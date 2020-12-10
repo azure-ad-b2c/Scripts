@@ -1,0 +1,37 @@
+﻿@model SetupState
+@{
+    ViewData["Title"] = "Setup results";
+}
+    <div class="text-left">
+        <h2 class="display-4">Setup results</h2>
+        <br>
+        <h3>Next Steps - Required</h3>
+        <p class="text-justify">
+            The IEF applications (resource: IdentityExperienceFramework and client: ProxyIdentityExperienceFramework) need an admin consent before
+            they can be used by IEF policies.
+            <ol>
+                <li>Provide Admin consent by logging in with your Global Administrator account via <a href=@Model.ConsentUrl> this link</a>, you will be then redirected to a non-existent page once it completes.</li>
+                <li>You can launch your custom policies from <a href=@Model.LaunchUrl> here</a>. Test a Sign up and Sign In by running the B2C_1A_signup_signin policy. </li>
+            </ol>
+        </p>
+
+    </div>
+<div class="text-left">
+
+    <table class="table table-bordered table-responsive table-hover">
+        <tr>
+            <th>Name</th>
+            <th>Id</th>
+            <th>Status</th>
+        </tr>
+        @foreach (var d in Model.Items)
+        {
+            <tr>
+                <td>@d.Name</td>
+                <td>@d.Id</td>
+                <td>@d.Status</td>
+            </tr>
+        }
+    </table>
+</div>
+
