@@ -94,6 +94,9 @@ namespace B2CIEFSetupWeb.Utilities
                 if (removeFb)
                 {
                     extFile = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/TrustFrameworkExtensions.xml");
+                    susiFile = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/SignUpOrSignin.xml");
+                    pwdResetFile = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/PasswordReset.xml");
+                    profileEditFile = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/ProfileEdit.xml");
                 }
 
                 baseFile = baseFile.Replace("yourtenant.onmicrosoft.com", dirDomainName + ".onmicrosoft.com");
