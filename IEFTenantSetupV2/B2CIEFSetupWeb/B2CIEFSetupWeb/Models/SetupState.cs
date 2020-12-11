@@ -12,6 +12,7 @@ namespace B2CIEFSetupWeb.Models
             Items = new List<ItemSetupState>();
         }
         public string ConsentUrl { get; set; }
+        public string AppConsentUrl { get; set; }
         public string LaunchUrl { get; set; }
         public List<ItemSetupState> Items { get; set; }
     }

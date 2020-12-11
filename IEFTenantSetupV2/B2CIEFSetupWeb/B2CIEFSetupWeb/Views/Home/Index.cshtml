@@ -19,11 +19,15 @@
                 You will asked to consent to a number of permissions needed to create applications, service principals and security keys in your tenant.
                 You will need to consent for the app to complete the setup.
             </li>
-            <li>The application will create the Facebook IdP provider and enable MFA for the best compatiblity. The Facebook reference can be removed afterwards.
+            <li>The application will create the Facebook Identity Provider and enable MFA for the best compatiblity. The Facebook reference can be removed afterwards.
         </ol>
         <form asp-action="Index" asp-controller="Home">
             <label asp-for="DomainName"></label>
             <p><input asp-for="DomainName" placeholder="yourdomain" style="text-align: right" />.onmicrosoft.com</p>
+            <p>
+                <label asp-for="RemoveFacebookReferences"></label>
+                <input asp-for="RemoveFacebookReferences" />
+            </p>            
             <input type="submit" />
         </form>
     </div>

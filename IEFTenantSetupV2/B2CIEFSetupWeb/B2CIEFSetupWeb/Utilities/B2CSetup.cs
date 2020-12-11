@@ -5,11 +5,13 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Linq;
 
 namespace B2CIEFSetupWeb.Utilities
@@ -30,15 +32,17 @@ namespace B2CIEFSetupWeb.Utilities
         }
         public string DomainName { get; private set; }
         private bool _readOnly = false;
-        public async Task<List<IEFObject>> SetupAsync(string domainId, bool readOnly, string dirDomainName)
+        private bool _removeFb = false;
+
+        public async Task<List<IEFObject>> SetupAsync(string domainId, bool removeFb, string dirDomainName)
         {
-            using (_logger.BeginScope("SetupAsync: {0} - Read only: {1}", domainId, readOnly))
+            using (_logger.BeginScope("SetupAsync: {0} - Read only: {1}", domainId, removeFb))
             {
-                _readOnly = readOnly;
+                _removeFb = removeFb;
                 try
                 {
                     var token = await _tokenAcquisition.GetAccessTokenOnBehalfOfUserAsync(
-                        readOnly ? Constants.ReadOnlyScopes : Constants.ReadWriteScopes,
+                        Constants.ReadWriteScopes,
                         domainId);
                     _http = new HttpClient();
                     _http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
@@ -85,11 +89,60 @@ namespace B2CIEFSetupWeb.Utilities
                 string pwdResetFile = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/PasswordReset.xml");
                 string profileEditFile = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/ProfileEdit.xml");
 
+                string baseFileLocal = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/TrustFrameworkBase.xml");
+
+                if (removeFb)
+                {
+                    extFile = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/TrustFrameworkExtensions.xml");
+                }
+
                 baseFile = baseFile.Replace("yourtenant.onmicrosoft.com", dirDomainName + ".onmicrosoft.com");
                 extFile = extFile.Replace("yourtenant.onmicrosoft.com", dirDomainName + ".onmicrosoft.com");
                 susiFile = susiFile.Replace("yourtenant.onmicrosoft.com", dirDomainName + ".onmicrosoft.com");
                 pwdResetFile = pwdResetFile.Replace("yourtenant.onmicrosoft.com", dirDomainName + ".onmicrosoft.com");
                 profileEditFile = profileEditFile.Replace("yourtenant.onmicrosoft.com", dirDomainName + ".onmicrosoft.com");
+
+                if (removeFb)
+                {
+                    // Remove default social and local and mfa user journeys
+                    XmlDocument socialAndLocalBase = new XmlDocument();
+                    socialAndLocalBase.LoadXml(baseFile);
+                    var nsmgr = new XmlNamespaceManager(socialAndLocalBase.NameTable);
+                    nsmgr.AddNamespace("xsl", "http://schemas.microsoft.com/online/cpim/schemas/2013/06");
+
+                    XmlNode socialAndMFAJourneys = socialAndLocalBase.SelectSingleNode("/xsl:TrustFrameworkPolicy/xsl:UserJourneys", nsmgr);
+                    socialAndMFAJourneys.RemoveAll();
+                    XmlNode parentSocialAndMFAJourneys = socialAndMFAJourneys.ParentNode;
+                    parentSocialAndMFAJourneys.RemoveChild(socialAndMFAJourneys);
+
+                    XmlNode facebookTP = socialAndLocalBase.SelectSingleNode("/xsl:TrustFrameworkPolicy/xsl:ClaimsProviders/xsl:ClaimsProvider[1]", nsmgr);
+                    facebookTP.RemoveAll();
+                    XmlNode parentfacebookTP = facebookTP.ParentNode;
+                    parentfacebookTP.RemoveChild(facebookTP);
+
+                    using (var stringWriter = new StringWriter())
+                    using (var xmlTextWriter = XmlWriter.Create(stringWriter))
+                    {
+                        socialAndLocalBase.WriteTo(xmlTextWriter);
+                        xmlTextWriter.Flush();
+                        baseFile = stringWriter.GetStringBuilder().ToString();
+                    }
+
+                    // Insert user journeys from LocalAccounts base file into Ext file.
+                    XmlDocument localBase = new XmlDocument();
+                    localBase.LoadXml(baseFileLocal);
+                    XmlNode localBaseJourneys = localBase.SelectSingleNode("/xsl:TrustFrameworkPolicy/xsl:UserJourneys", nsmgr);
+
+                    using (var stringWriter = new StringWriter())
+                    using (var xmlTextWriter = XmlWriter.Create(stringWriter))
+                    {
+                        string localJourneysString = localBaseJourneys.OuterXml;
+                        extFile = extFile.Replace("</TrustFrameworkPolicy>", localJourneysString + "</TrustFrameworkPolicy>");
+                    }
+
+                }
+
+
 
                 extFile = extFile.Replace("ProxyIdentityExperienceFrameworkAppId", _actions[1].Id);
                 extFile = extFile.Replace("IdentityExperienceFrameworkAppId", _actions[0].Id);
@@ -116,28 +169,39 @@ namespace B2CIEFSetupWeb.Utilities
 
 
                 //upload facebook secret
-                if (!_keys.Contains($"B2C_1A_FacebookSecret"))
+                if (!removeFb)
                 {
-                    var fbKeySetResp = await _http.PostAsync("https://graph.microsoft.com/beta/trustFramework/keySets",
-                    new StringContent(JsonConvert.SerializeObject(new { id = "FacebookSecret" }), Encoding.UTF8, "application/json"));
-
-
-                    var fbKeyGenerateResp = await _http.PostAsync("https://graph.microsoft.com/beta/trustFramework/keySets/B2C_1A_FacebookSecret/uploadSecret",
-                    new StringContent(JsonConvert.SerializeObject(new { use = "sig", k = "secret", nbf = 1607626546, exp = 4132148146 }), Encoding.UTF8, "application/json"));
-
-                    if (fbKeyGenerateResp.IsSuccessStatusCode)
+                    if (!_keys.Contains($"B2C_1A_FacebookSecret"))
                     {
-                        _actions.Add(new IEFObject()
-                        {
-                            Name = "Facebook secret",
-                            Id = "B2C_FacebookSecret",
-                            Status = IEFObject.S.Uploaded
-                        });
+                        var fbKeySetResp = await _http.PostAsync("https://graph.microsoft.com/beta/trustFramework/keySets",
+                        new StringContent(JsonConvert.SerializeObject(new { id = "FacebookSecret" }), Encoding.UTF8, "application/json"));
 
+
+                        var fbKeyGenerateResp = await _http.PostAsync("https://graph.microsoft.com/beta/trustFramework/keySets/B2C_1A_FacebookSecret/uploadSecret",
+                        new StringContent(JsonConvert.SerializeObject(new { use = "sig", k = "secret", nbf = 1607626546, exp = 4132148146 }), Encoding.UTF8, "application/json"));
+
+                        if (fbKeyGenerateResp.IsSuccessStatusCode)
+                        {
+                            _actions.Add(new IEFObject()
+                            {
+                                Name = "Facebook secret",
+                                Id = "B2C_FacebookSecret",
+                                Status = IEFObject.S.Uploaded
+                            });
+
+                        }
                     }
                 }
+                else {
+                    _actions.Add(new IEFObject()
+                    {
+                        Name = "Facebook secret",
+                        Id = "B2C_FacebookSecret",
+                        Status = IEFObject.S.Skipped
+                    });
+                }
 
-                if (_keys.Contains($"B2C_1A_FacebookSecret"))
+                if (_keys.Contains($"B2C_1A_FacebookSecret") & (!removeFb))
                 {
                     _actions.Add(new IEFObject()
                     {
@@ -559,7 +623,7 @@ namespace B2CIEFSetupWeb.Utilities
 
     public class IEFObject
     {
-        public enum S { New, Existing, NotFound, Uploaded }
+        public enum S { New, Existing, NotFound, Uploaded, Skipped }
         public string Name;
         public string Id;
         public S Status;

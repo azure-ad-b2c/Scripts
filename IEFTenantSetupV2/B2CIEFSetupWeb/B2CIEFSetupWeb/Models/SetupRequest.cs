@@ -16,8 +16,8 @@ namespace B2CIEFSetupWeb.Models
         public string DomainName { get; set; }
 
         [Required]
-        [DisplayName("Validate only (do not create)")]
-        public bool ValidateOnly { get; set; }
+        [DisplayName("Remove Facebook references")]
+        public bool RemoveFacebookReferences { get; set; }
 
     }
 }
