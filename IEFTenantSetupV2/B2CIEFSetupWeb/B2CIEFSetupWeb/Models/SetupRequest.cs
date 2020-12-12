@@ -18,6 +18,9 @@ namespace B2CIEFSetupWeb.Models
         [Required]
         [DisplayName("Remove Facebook references")]
         public bool RemoveFacebookReferences { get; set; }
+        [Required]
+        [DisplayName("Deploy Phone SignIn Journeys")]
+        public bool InitialisePhoneSignInJourneys{ get; set; }
 
-    }
+}
 }

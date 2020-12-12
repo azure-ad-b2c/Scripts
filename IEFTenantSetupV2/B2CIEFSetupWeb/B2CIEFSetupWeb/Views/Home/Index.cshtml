@@ -7,28 +7,57 @@
         <h1 class="display-4">Welcome</h1>
     </div>
     <div class="text-left">
-        <p>
-            The application will automate the entire process from: <a href="https://aka.ms/ief">Get started with custom policies in Azure Active Directory B2C.</a>.
-        </p>
-        <p>Basic operation:</p>
+
+        <h4>Introduction</h4>
+
+        <ul>
+            <li>
+                The application will automate the entire process from:
+                <a href="https://aka.ms/ief">Get started with custom policies in Azure Active Directory B2C</a>.
+            </li>
+
+            <li>And it will integrate Extension Attribute support from: <a href="https://docs.microsoft.com/en-us/azure/active-directory-b2c/custom-policy-custom-attributes#create-a-new-application-to-store-the-extension-properties"> Enable custom attributes in a custom profile policy</a>.</li>
+
+            <li>After completing this setup, you will be able to use the <a href="https://github.com/azure-ad-b2c/samples">Azure AD B2C IEF Sample Policies</a>.</li>
+        </ul>
+        <hr />
+    </div>
+    <div class="text-left">
+
+
+        <h4>Usage</h4>
         <ol>
-            <li>Enter your B2C domain name</li>
-            <li>You will be asked to signin. Make sure to sign in with an account with admin rights to the B2C tenant. <b>At this stage, do not use an MSA
-            account to sign in. Use only work/school or local (to the B2C tenant: xyz@tenant.onmicrosoft.com) account.</b></li>
+            <li>Enter your Azure AD B2C directory name.</li>
+
+            <li>You will be asked to sign in. Make sure to sign in with an account with Global Admin rights to the B2C tenant. <b>Use only work/school or local (to the B2C tenant: xyz@tenant.onmicrosoft.com) account.</b></li>
             <li>
                 You will be asked to consent to a number of permissions needed to create applications, service principals and security keys in your tenant.
                 You will need to consent for the app to complete the setup.
             </li>
-            <li>You have the option to remove the Facebook references from the deployment process.
-                This will provision the SocialAndLocalAccountsWithMFA starter pack with the User Journeys from the LocalAccount starter pack.</li>
+
         </ol>
+        <hr />
+        <h4>Options</h4>
+        <ol>
+            <li>
+                <b>Remove Facebook references</b> - Removes the Facebook references from the deployment process when selected.
+                Doing so, will provision the <a href="https://github.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack">SocialAndLocalAccountsWithMFA starter pack</a> with the User Journeys from the <a href="https://github.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack">LocalAccount starter pack</a>.
+            </li>
+            <li>
+                <b>Deploy Phone SignIn Journeys</b> - Deploys the <a href="https://github.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/tree/master/scenarios/phone-number-passwordless">Phone Sign In/Up passwordless journeys</a> in addition to the LocalAndSocialWithMFA starter pack.
+            </li>
+        </ol>
+        <hr />
+        <h4>Begin setup:</h4>
         <form asp-action="Index" asp-controller="Home">
             <label asp-for="DomainName"></label>
             <p><input asp-for="DomainName" placeholder="yourdomain" style="text-align: right" />.onmicrosoft.com</p>
             <p>
                 <label asp-for="RemoveFacebookReferences"></label>
-                <input asp-for="RemoveFacebookReferences" />
-            </p>            
+                <input asp-for="RemoveFacebookReferences" /><br />
+                <label asp-for="InitialisePhoneSignInJourneys"></label>
+                <input asp-for="InitialisePhoneSignInJourneys" />
+            </p>
             <input type="submit" />
         </form>
     </div>

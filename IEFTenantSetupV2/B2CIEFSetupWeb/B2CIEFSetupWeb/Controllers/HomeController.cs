@@ -43,12 +43,13 @@ namespace B2CIEFSetupWeb.Controllers
                 new AuthenticationProperties(
                     new Dictionary<string, string>()
                     {
-                        { ".redirect", "/home/setup?fb=" + req.RemoveFacebookReferences.ToString() + "&domainName=" + req.DomainName.ToString() }
+                        { ".redirect", "/home/setup?fb=" + req.RemoveFacebookReferences.ToString() + "&domainName=" + req.DomainName.ToString() + "&deployPhoneSignInJourneys=" + req.InitialisePhoneSignInJourneys.ToString()}
                     },
                     new Dictionary<string, object>()
                     {
                         {"tenant", req.DomainName },
-                        {"RemoveFacebook", req.RemoveFacebookReferences }
+                        {"RemoveFacebook", req.RemoveFacebookReferences },
+                        {"deployPhoneSignInJourneys", req.InitialisePhoneSignInJourneys }
                         //{"admin_consent", true }
                     }));
             return View();
@@ -58,17 +59,26 @@ namespace B2CIEFSetupWeb.Controllers
         {
             return View();
         }
+
+        public IActionResult Support()
+        {
+            return View();
+        }
+
         [Authorize]
         public async Task<IActionResult> Setup([FromServices] Utilities.B2CSetup setup, [FromServices] ITokenAcquisition tokenAcquisition)
         {
             var removeFbStr = Request.Query["fb"].First();
             var dirDomainName = Request.Query["domainName"].First();
+            var InitialisePhoneSignInJourneysStr = Request.Query["deployPhoneSignInJourneys"].First();
             bool removeFb = false;
+            bool initialisePhoneSignInJourneys = false;
             bool.TryParse(removeFbStr, out removeFb);
+            bool.TryParse(InitialisePhoneSignInJourneysStr, out initialisePhoneSignInJourneys);
             var tenantId = User.Claims.First(c => c.Type == "http://schemas.microsoft.com/identity/claims/tenantid").Value;
             //var token = await tokenAcquisition.GetAccessTokenOnBehalfOfUserAsync(Constants.Scopes, tenantId);
 
-            var res = await setup.SetupAsync(tenantId, removeFb, dirDomainName);
+            var res = await setup.SetupAsync(tenantId, removeFb, dirDomainName, initialisePhoneSignInJourneys);
             var model = new SetupState();
             foreach(var item in res)
             {
@@ -76,10 +86,14 @@ namespace B2CIEFSetupWeb.Controllers
                 {
                     Name = item.Name,
                     Id = (String.IsNullOrEmpty(item.Id)? "-": item.Id),
-                    Status = item.Status == IEFObject.S.Existing? "Existing": item.Status == IEFObject.S.New ? "New" : item.Status == IEFObject.S.Uploaded ? "Uploaded"  : item.Status == IEFObject.S.Skipped ? "Skipped" : "Not found"
+                    Status = item.Status == IEFObject.S.Exists? "Exists": item.Status == IEFObject.S.New ? "New" : item.Status == IEFObject.S.Uploaded ? "Uploaded" : item.Status == IEFObject.S.Failed ? "Failed" : item.Status == IEFObject.S.Skipped ? "Skipped" : "Not found"
                 });
             }
+
+            string testAppConsentAppId = res.First(kvp => kvp.Name == "IEF Test App Registration").Id;
+
             model.ConsentUrl = $"https://login.microsoftonline.com/{tenantId}/oauth2/authorize?client_id={res[1].Id}&prompt=admin_consent&response_type=code&nonce=defaultNonce";
+            model.AppConsentUrl = $"https://login.microsoftonline.com/{tenantId}/oauth2/authorize?client_id={testAppConsentAppId}&prompt=admin_consent&response_type=code&nonce=defaultNonce";
             model.LaunchUrl = $"https://portal.azure.com/#blade/Microsoft_AAD_B2CAdmin/CustomPoliciesMenuBlade/overview/tenantId/{dirDomainName}.onmicrosoft.com";
             return View(model);
         }

@@ -18,7 +18,7 @@ namespace B2CIEFSetupWeb.Utilities
 {
     public interface IB2CSetup
     {
-        Task<List<IEFObject>> SetupAsync(string domainId, bool readOnly, string dirDomainName);
+        Task<List<IEFObject>> SetupAsync(string domainId, bool readOnly, string dirDomainName, bool initialisePhoneSignInJourneys);
     }
     public class B2CSetup : IB2CSetup
     {
@@ -34,7 +34,7 @@ namespace B2CIEFSetupWeb.Utilities
         private bool _readOnly = false;
         private bool _removeFb = false;
 
-        public async Task<List<IEFObject>> SetupAsync(string domainId, bool removeFb, string dirDomainName)
+        public async Task<List<IEFObject>> SetupAsync(string domainId, bool removeFb, string dirDomainName, bool initialisePhoneSignInJourneys)
         {
             using (_logger.BeginScope("SetupAsync: {0} - Read only: {1}", domainId, removeFb))
             {
@@ -55,14 +55,14 @@ namespace B2CIEFSetupWeb.Utilities
                     {
                         Name = "Extensions app: appId",
                         Id = extAppId,
-                        Status = String.IsNullOrEmpty(extAppId) ? IEFObject.S.NotFound : IEFObject.S.Existing
+                        Status = String.IsNullOrEmpty(extAppId) ? IEFObject.S.NotFound : IEFObject.S.Exists
                     });
                     extAppId = await GetAppIdAsync("b2c-extensions-app", true);
                     _actions.Add(new IEFObject()
                     {
                         Name = "Extensions app: objectId",
                         Id = extAppId,
-                        Status = String.IsNullOrEmpty(extAppId) ? IEFObject.S.NotFound : IEFObject.S.Existing
+                        Status = String.IsNullOrEmpty(extAppId) ? IEFObject.S.NotFound : IEFObject.S.Exists
                     });
                 } catch(Exception ex)
                 {
@@ -70,46 +70,25 @@ namespace B2CIEFSetupWeb.Utilities
                 }
 
 
-
-                //ief app 0
-                //proxyief app 1
-                //extension appid 4
-                //extension objectId 5
+                //actions structure
+                    //ief app 0
+                    //proxyief app 1
+                    //extension appid 4
+                    //extension objectId 5
 
 
                 //download localAndSocialStarterPack
-                //base: https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/TrustFrameworkBase.xml
-                //extensions: https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/TrustFrameworkExtensions.xml
-                //signinup: https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/SignUpOrSignin.xml
+                // returns list policyId: policyXML
+                var policyList = GetPolicyFiles(removeFb, dirDomainName, initialisePhoneSignInJourneys);
 
-
-                string baseFile = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/TrustFrameworkBase.xml");
-                string extFile = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/TrustFrameworkExtensions.xml");
-                string susiFile = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/SignUpOrSignin.xml");
-                string pwdResetFile = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/PasswordReset.xml");
-                string profileEditFile = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/ProfileEdit.xml");
-
-                string baseFileLocal = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/TrustFrameworkBase.xml");
-
-                if (removeFb)
-                {
-                    extFile = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/TrustFrameworkExtensions.xml");
-                    susiFile = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/SignUpOrSignin.xml");
-                    pwdResetFile = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/PasswordReset.xml");
-                    profileEditFile = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/ProfileEdit.xml");
-                }
-
-                baseFile = baseFile.Replace("yourtenant.onmicrosoft.com", dirDomainName + ".onmicrosoft.com");
-                extFile = extFile.Replace("yourtenant.onmicrosoft.com", dirDomainName + ".onmicrosoft.com");
-                susiFile = susiFile.Replace("yourtenant.onmicrosoft.com", dirDomainName + ".onmicrosoft.com");
-                pwdResetFile = pwdResetFile.Replace("yourtenant.onmicrosoft.com", dirDomainName + ".onmicrosoft.com");
-                profileEditFile = profileEditFile.Replace("yourtenant.onmicrosoft.com", dirDomainName + ".onmicrosoft.com");
+                // Strip UJs from SocialLocalMFA base file
+                // Take UJs from Local base file and put it in Extensions file
 
                 if (removeFb)
                 {
                     // Remove default social and local and mfa user journeys
                     XmlDocument socialAndLocalBase = new XmlDocument();
-                    socialAndLocalBase.LoadXml(baseFile);
+                    socialAndLocalBase.LoadXml(policyList.First(kvp => kvp.Key == "B2C_1A_TrustFrameworkBase").Value);
                     var nsmgr = new XmlNamespaceManager(socialAndLocalBase.NameTable);
                     nsmgr.AddNamespace("xsl", "http://schemas.microsoft.com/online/cpim/schemas/2013/06");
 
@@ -123,262 +102,116 @@ namespace B2CIEFSetupWeb.Utilities
                     XmlNode parentfacebookTP = facebookTP.ParentNode;
                     parentfacebookTP.RemoveChild(facebookTP);
 
-                    using (var stringWriter = new StringWriter())
-                    using (var xmlTextWriter = XmlWriter.Create(stringWriter))
-                    {
-                        socialAndLocalBase.WriteTo(xmlTextWriter);
-                        xmlTextWriter.Flush();
-                        baseFile = stringWriter.GetStringBuilder().ToString();
-                    }
+                    //policyList.RemoveAll(kvp => kvp.Key == "B2C_1A_TrustFrameworkBase");
+                    policyList["B2C_1A_TrustFrameworkBase"] = socialAndLocalBase.OuterXml;
+                    //policyList.Add(new KeyValuePair<string, string>("B2C_1A_TrustFrameworkBase", socialAndLocalBase.OuterXml));
 
                     // Insert user journeys from LocalAccounts base file into Ext file.
                     XmlDocument localBase = new XmlDocument();
+                    string baseFileLocal = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/TrustFrameworkBase.xml");
                     localBase.LoadXml(baseFileLocal);
                     XmlNode localBaseJourneys = localBase.SelectSingleNode("/xsl:TrustFrameworkPolicy/xsl:UserJourneys", nsmgr);
 
-                    using (var stringWriter = new StringWriter())
-                    using (var xmlTextWriter = XmlWriter.Create(stringWriter))
-                    {
-                        string localJourneysString = localBaseJourneys.OuterXml;
-                        extFile = extFile.Replace("</TrustFrameworkPolicy>", localJourneysString + "</TrustFrameworkPolicy>");
-                    }
+                    string localJourneysString = localBaseJourneys.OuterXml;
+                    localJourneysString.Replace("<UserJourneys xmlns=\"http://schemas.microsoft.com/online/cpim/schemas/2013/06\">", "<UserJourneys>");
+                    string extFile = policyList.First(kvp => kvp.Key == "B2C_1A_TrustFrameworkExtensions").Value;
+                    extFile = extFile.Replace("</TrustFrameworkPolicy>", localJourneysString + "</TrustFrameworkPolicy>");
+                    extFile.Replace("yourtenant.onmicrosoft.com", dirDomainName + ".onmicrosoft.com");
+
+                    //policyList.RemoveAll(kvp => kvp.Key == "B2C_1A_TrustFrameworkExtensions");
+                    //policyList.Add(new KeyValuePair<string, string>("B2C_1A_TrustFrameworkExtensions", extFile));
+
+                    policyList["B2C_1A_TrustFrameworkExtensions"] = extFile;
 
                 }
 
+            // setup login-noninteractive and ext attribute support
+            policyList = SetupAADCommon(policyList, initialisePhoneSignInJourneys);
 
-
-                extFile = extFile.Replace("ProxyIdentityExperienceFrameworkAppId", _actions[1].Id);
-                extFile = extFile.Replace("IdentityExperienceFrameworkAppId", _actions[0].Id);
-
-                string aadCommon = @"    
-                            <ClaimsProviders>
-                             <ClaimsProvider>
-                              <DisplayName>Azure Active Directory</DisplayName>
-                              <TechnicalProfiles>
-                                <TechnicalProfile Id=""AAD-Common"">
-                                  <DisplayName>Azure Active Directory</DisplayName>
-                                  <Metadata>
-                                    <Item Key=""ApplicationObjectId"">ExtAppObjectId</Item>
-                                    <Item Key=""ClientId"">ExtAppId</Item>
-                                  </Metadata>
-                                </TechnicalProfile>
-                              </TechnicalProfiles>
-                            </ClaimsProvider>";
-
-                aadCommon = aadCommon.Replace("ExtAppObjectId", _actions[5].Id);
-                aadCommon = aadCommon.Replace("ExtAppId", _actions[4].Id);
-
-                extFile = extFile.Replace("<ClaimsProviders>", aadCommon);
-
-
-                //upload facebook secret
-                if (!removeFb)
+            if (!removeFb)
+            {
+                await SetupDummyFacebookSecret(removeFb);
+            }
+            else
+            {
+                _actions.Add(new IEFObject()
                 {
-                    if (!_keys.Contains($"B2C_1A_FacebookSecret"))
-                    {
-                        var fbKeySetResp = await _http.PostAsync("https://graph.microsoft.com/beta/trustFramework/keySets",
-                        new StringContent(JsonConvert.SerializeObject(new { id = "FacebookSecret" }), Encoding.UTF8, "application/json"));
+                    Name = "Facebook secret",
+                    Id = "B2C_FacebookSecret",
+                    Status = IEFObject.S.Skipped
+                });
+            }
 
-
-                        var fbKeyGenerateResp = await _http.PostAsync("https://graph.microsoft.com/beta/trustFramework/keySets/B2C_1A_FacebookSecret/uploadSecret",
-                        new StringContent(JsonConvert.SerializeObject(new { use = "sig", k = "secret", nbf = 1607626546, exp = 4132148146 }), Encoding.UTF8, "application/json"));
-
-                        if (fbKeyGenerateResp.IsSuccessStatusCode)
-                        {
-                            _actions.Add(new IEFObject()
-                            {
-                                Name = "Facebook secret",
-                                Id = "B2C_FacebookSecret",
-                                Status = IEFObject.S.Uploaded
-                            });
-
-                        }
-                    }
-                }
-                else {
-                    _actions.Add(new IEFObject()
-                    {
-                        Name = "Facebook secret",
-                        Id = "B2C_FacebookSecret",
-                        Status = IEFObject.S.Skipped
-                    });
-                }
-
-                if (_keys.Contains($"B2C_1A_FacebookSecret") & (!removeFb))
-                {
-                    _actions.Add(new IEFObject()
-                    {
-                        Name = "Facebook secret",
-                        Id = "B2C_FacebookSecret",
-                        Status = IEFObject.S.Existing
-                    });
-
-                }
-
-
-                //upload all files
-
-                XDocument basePolicyFile = XDocument.Parse(baseFile);
-                string basePolicyFileId = basePolicyFile.Root.Attribute("PolicyId").Value;
-                var baseResp = await _http.PutAsync($"https://graph.microsoft.com/beta/trustFramework/policies/" + basePolicyFileId + "/$value",
-                new StringContent(baseFile, Encoding.UTF8, "application/xml"));
-                if (baseResp.IsSuccessStatusCode)
-                {
-                    _actions.Add(new IEFObject()
-                    {
-                        Name = "TrustframeworkBase",
-                        Id = basePolicyFileId,
-                        Status = IEFObject.S.Uploaded
-                    });
-
-                }
-                XDocument extPolicyFile = XDocument.Parse(extFile);
-                string extPolicyFileId = extPolicyFile.Root.Attribute("PolicyId").Value;
-                var extResp = await _http.PutAsync($"https://graph.microsoft.com/beta/trustFramework/policies/" + extPolicyFileId + "/$value",
-                new StringContent(extFile, Encoding.UTF8, "application/xml"));
-                if (extResp.IsSuccessStatusCode)
-                {
-                    _actions.Add(new IEFObject()
-                    {
-                        Name = "TrustframeworkExtensions",
-                        Id = extPolicyFileId,
-                        Status = IEFObject.S.Uploaded
-                    });
-
-                }
-                XDocument susiPolicyFile = XDocument.Parse(susiFile);
-                string susiPolicyFileId = susiPolicyFile.Root.Attribute("PolicyId").Value;
-                var susiResp = await _http.PutAsync($"https://graph.microsoft.com/beta/trustFramework/policies/" + susiPolicyFileId + "/$value",
-                new StringContent(susiFile, Encoding.UTF8, "application/xml"));
-                if (susiResp.IsSuccessStatusCode)
-                {
-                    _actions.Add(new IEFObject()
-                    {
-                        Name = "SignUpSignIn",
-                        Id = susiPolicyFileId,
-                        Status = IEFObject.S.Uploaded
-                    });
-
-                }
-                XDocument pwdResetPolicyFile = XDocument.Parse(pwdResetFile);
-                string pwdResetPolicyFileId = pwdResetPolicyFile.Root.Attribute("PolicyId").Value;
-                var pwdResetResp = await _http.PutAsync($"https://graph.microsoft.com/beta/trustFramework/policies/" + pwdResetPolicyFileId + "/$value",
-                new StringContent(pwdResetFile, Encoding.UTF8, "application/xml"));
-                if (pwdResetResp.IsSuccessStatusCode)
-                {
-                    _actions.Add(new IEFObject()
-                    {
-                        Name = "PasswordReset",
-                        Id = pwdResetPolicyFileId,
-                        Status = IEFObject.S.Uploaded
-                    });
-
-                }
-                XDocument profileEditPolicyFile = XDocument.Parse(profileEditFile);
-                string profileEditPolicyFileId = profileEditPolicyFile.Root.Attribute("PolicyId").Value;
-                var profileEditResp = await _http.PutAsync($"https://graph.microsoft.com/beta/trustFramework/policies/" + profileEditPolicyFileId + "/$value",
-                new StringContent(profileEditFile, Encoding.UTF8, "application/xml"));
-                if (profileEditResp.IsSuccessStatusCode)
-                {
-                    _actions.Add(new IEFObject()
-                    {
-                        Name = "ProfileEdit",
-                        Id = profileEditPolicyFileId,
-                        Status = IEFObject.S.Uploaded
-                    });
-
-                }
-
-
-
-                //CREATE TEST APP
-
-                var iefTestApp = new
-                {
-                    isFallbackPublicClient = false,
-                    identifierUris = new List<string>() { $"https://{DomainName}/IEFTestApp"},
-                    displayName = "IEF Test App",
-                    signInAudience = "AzureADandPersonalMicrosoftAccount",
-                    publicClient = new { redirectUris = new List<string>() { $"https://jwt.ms" } },
-                    parentalControlSettings = new { legalAgeGroupRule = "Allow" },
-                    requiredResourceAccess = new List<object>() {
-                new {
-                    resourceAppId = "00000003-0000-0000-c000-000000000000",
-                    resourceAccess = new List<object>()
-                    {
-                        new {
-                                id = "37f7f235-527c-4136-accd-4a02d197296e",
-                                type = "Scope"
-                            },
-                        new {
-                                id = "7427e0e9-2fba-42fe-b0c0-848c9e6a8182",
-                                type = "Scope"
-                            }
-                    }
-                }
-            },
-                    web = new
-                    {
-                        implicitGrantSettings = new
-                        {
-                            enableIdTokenIssuance = true,
-                            enableAccessTokenIssuance = true
-                        }
-                    }
-                };
-
-                var json = JsonConvert.SerializeObject(iefTestApp);
-                var resp = await _http.PostAsync($"https://graph.microsoft.com/beta/applications",
-                    new StringContent(json, Encoding.UTF8, "application/json"));
-
-                if (!resp.IsSuccessStatusCode)
-                {
-                    _actions.Add(new IEFObject()
-                    {
-                        Name = "IEF Test App Registration",
-                        Id = "-",
-                        Status = IEFObject.S.Existing
-                    });
-                }
-
-
-                    if (resp.IsSuccessStatusCode)
-                {
-                    _logger.LogTrace("{0} app created", "iefTestApp");
-
-                    var body = await resp.Content.ReadAsStringAsync();
-                    var appJSON = JObject.Parse(body);
-                    var id = (string)appJSON["appId"];
-
-                    _actions.Add(new IEFObject()
-                    {
-                        Name = "IEF Test App Registration",
-                        Id = id,
-                        Status = IEFObject.S.New
-                    });
-
-
-
-                    var sp = new
-                    {
-                        accountEnabled = true,
-                        appId = _actions[12].Id,
-                        appRoleAssignmentRequired = false,
-                        displayName = "IEF Test App",
-                    };
-                    resp = await _http.PostAsync($"https://graph.microsoft.com/beta/servicePrincipals",
-                        new StringContent(JsonConvert.SerializeObject(sp), Encoding.UTF8, "application/json"));
-                    if (!resp.IsSuccessStatusCode) throw new Exception(resp.ReasonPhrase);
-                    //AdminConsentUrl = new Uri($"https://login.microsoftonline.com/{tokens.TenantId}/oauth2/authorize?client_id={appIds.ProxyAppId}&prompt=admin_consent&response_type=code&nonce=defaultNonce");
-                    _logger.LogTrace("{0} SP created", "IEF Test App");
-                }
-
-
+            await UploadPolicyFiles(policyList);
+            await CreateJwtMsTestApp();
             }
             return _actions;
         }
         public List<IEFObject> _actions;
         public SetupState _state;
+
+
+
+        private Dictionary<string, string> GetPolicyFiles(bool removeFb, string dirDomainName, bool initialisePhoneSignInJourneys)
+        {
+
+            var policyFileList = new List<string>();
+            policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/TrustFrameworkBase.xml"));
+
+            if (!removeFb)
+            {
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/TrustFrameworkExtensions.xml"));
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/SignUpOrSignin.xml"));
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/PasswordReset.xml"));
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/ProfileEdit.xml"));
+            }
+            if (removeFb)
+            {
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/TrustFrameworkExtensions.xml"));
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/SignUpOrSignin.xml"));
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/PasswordReset.xml"));
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/ProfileEdit.xml"));
+            }
+
+            if (initialisePhoneSignInJourneys)
+            {
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/scenarios/phone-number-passwordless/Phone_Email_Base.xml"));
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/scenarios/phone-number-passwordless/ChangePhoneNumber.xml"));
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/scenarios/phone-number-passwordless/ProfileEditPhoneEmail.xml"));
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/scenarios/phone-number-passwordless/ProfileEditPhoneOnly.xml"));
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/scenarios/phone-number-passwordless/SignUpOrSignInWithPhone.xml"));
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/scenarios/phone-number-passwordless/SignUpOrSignInWithPhoneOrEmail.xml"));
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/scenarios/phone-number-passwordless/PasswordResetEmail.xml"));
+
+            }
+
+            for (int i = 0; i < policyFileList.Count; i++)
+            {
+                policyFileList[i] = policyFileList[i].Replace("yourtenant.onmicrosoft.com", dirDomainName + ".onmicrosoft.com");
+                //policyFileList[i] = policyFileList[i].Replace("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>", "");                
+            }
+
+            //build k-v pair list of policyId:policyFilen
+            var policyList = buildPolicyListByPolicyId(policyFileList);
+
+            return policyList;
+        }
+
+        private Dictionary<string, string> buildPolicyListByPolicyId(List<string> policyFileList)
+        {
+
+            var policyList = new Dictionary<string, string>();
+            foreach (string policyFile in policyFileList)
+            {
+
+                XDocument policyFileDoc = XDocument.Parse(policyFile);
+                string policyFileDocPolicyId = policyFileDoc.Root.Attribute("PolicyId").Value;
+                policyList.Add(policyFileDocPolicyId, policyFile);
+            }
+
+            return policyList;
+        }
+
 
         private async Task SetupIEFAppsAsync(string domainId)
         {
@@ -396,15 +229,15 @@ namespace B2CIEFSetupWeb.Utilities
                 Name = AppName,
                 Status = IEFObject.S.NotFound
             });
-            _actions[0].Id = await GetAppIdAsync(_actions[0].Name);
-            if (!String.IsNullOrEmpty(_actions[0].Id)) _actions[0].Status = IEFObject.S.Existing;
+            _actions[0].Id = await GetAppIdAsync(_actions.First(kvp => kvp.Name == "IdentityExperienceFramework").Name);
+            if (!String.IsNullOrEmpty(_actions[0].Id)) _actions[0].Status = IEFObject.S.Exists;
             _actions.Add(new IEFObject()
             {
                 Name = ProxyAppName,
                 Status = IEFObject.S.NotFound
             });
-            _actions[1].Id = await GetAppIdAsync(_actions[1].Name);
-            if (!String.IsNullOrEmpty(_actions[1].Id)) _actions[1].Status = IEFObject.S.Existing;
+            _actions[1].Id = await GetAppIdAsync(_actions.First(kvp => kvp.Name == "ProxyIdentityExperienceFramework").Name);
+            if (!String.IsNullOrEmpty(_actions[1].Id)) _actions[1].Status = IEFObject.S.Exists;
 
             if (!String.IsNullOrEmpty(_actions[0].Id) && !String.IsNullOrEmpty(_actions[1].Id)) return; // Sorry! What if only one exists?
             //TODO: should verify whether the two apps are setup correctly
@@ -466,14 +299,14 @@ namespace B2CIEFSetupWeb.Utilities
                 var sp = new
                 {
                     accountEnabled = true,
-                    appId = _actions[0].Id,
+                    appId = _actions.First(kvp => kvp.Name == "IdentityExperienceFramework").Id,
                     appRoleAssignmentRequired = false,
                     displayName = AppName,
                     homepage = $"https://login.microsoftonline.com/{DomainName}",
                     replyUrls = new List<string>() { $"https://login.microsoftonline.com/{DomainName}" },
                     servicePrincipalNames = new List<string>() {
                     app.identifierUris[0],
-                    _actions[0].Id
+                    _actions.First(kvp => kvp.Name == "IdentityExperienceFramework").Id
                 },
                     tags = new string[] { "WindowsAzureActiveDirectoryIntegratedApp" },
                 };
@@ -492,7 +325,7 @@ namespace B2CIEFSetupWeb.Utilities
                 parentalControlSettings = new { legalAgeGroupRule = "Allow" },
                 requiredResourceAccess = new List<object>() {
                 new {
-                    resourceAppId = _actions[0].Id,
+                    resourceAppId = _actions.First(kvp => kvp.Name == "IdentityExperienceFramework").Id,
                     resourceAccess = new List<object>()
                     {
                         new {
@@ -536,14 +369,14 @@ namespace B2CIEFSetupWeb.Utilities
                 var sp = new
                 {
                     accountEnabled = true,
-                    appId = _actions[1].Id,
+                    appId = _actions.First(kvp => kvp.Name == "ProxyIdentityExperienceFramework").Id,
                     appRoleAssignmentRequired = false,
                     displayName = ProxyAppName,
                     //homepage = $"https://login.microsoftonline.com/{DomainName}",
                     //publisherName = DomainNamePrefix,
                     replyUrls = new List<string>() { $"https://login.microsoftonline.com/{DomainName}" },
                     servicePrincipalNames = new List<string>() {
-                    _actions[1].Id
+                    _actions.First(kvp => kvp.Name == "ProxyIdentityExperienceFramework").Id
                 },
                     tags = new string[] { "WindowsAzureActiveDirectoryIntegratedApp" },
                 };
@@ -556,6 +389,204 @@ namespace B2CIEFSetupWeb.Utilities
 
             return;
         }
+
+        private async Task UploadPolicyFiles(Dictionary<string, string> policyFileList)
+        {
+            foreach (KeyValuePair<string, string> policy in policyFileList)
+            {
+
+                XDocument policyFile = XDocument.Parse(policy.Value);
+                string policyFileId = policyFile.Root.Attribute("PolicyId").Value;
+                var resp = await _http.PutAsync($"https://graph.microsoft.com/beta/trustFramework/policies/" + policyFileId + "/$value",
+                new StringContent(policy.Value, Encoding.UTF8, "application/xml"));
+                if (resp.IsSuccessStatusCode)
+                {
+                    _actions.Add(new IEFObject()
+                    {
+                        Name = "Policy",
+                        Id = policyFileId,
+                        Status = IEFObject.S.Uploaded
+                    });
+
+                }
+                if (!resp.IsSuccessStatusCode)
+                {
+                    _actions.Add(new IEFObject()
+                    {
+                        Name = "Policy",
+                        Id = policyFileId,
+                        Status = IEFObject.S.Failed
+                    });
+
+                }
+            }
+
+
+        }
+
+        private Dictionary<string, string> SetupAADCommon(Dictionary<string, string> policyList, bool initialisePhoneSignInJourneys)
+        {
+
+            string extFile = policyList.First(kvp => kvp.Key == "B2C_1A_TrustFrameworkExtensions").Value;
+
+            extFile = extFile.Replace("ProxyIdentityExperienceFrameworkAppId", _actions.First(kvp => kvp.Name == "ProxyIdentityExperienceFramework").Id);
+            extFile = extFile.Replace("IdentityExperienceFrameworkAppId", _actions.First(kvp => kvp.Name == "IdentityExperienceFramework").Id);
+
+            if (initialisePhoneSignInJourneys)
+            {
+                string phoneFile = policyList.First(kvp => kvp.Key == "B2C_1A_Phone_Email_Base").Value;
+
+                phoneFile = phoneFile.Replace("ProxyIdentityExperienceFrameworkAppId", _actions.First(kvp => kvp.Name == "ProxyIdentityExperienceFramework").Id);
+                phoneFile = phoneFile.Replace("IdentityExperienceFrameworkAppId", _actions.First(kvp => kvp.Name == "IdentityExperienceFramework").Id);
+
+            }
+
+            string aadCommon = @"    
+                            <ClaimsProviders>
+                             <ClaimsProvider>
+                              <DisplayName>Azure Active Directory</DisplayName>
+                              <TechnicalProfiles>
+                                <TechnicalProfile Id=""AAD-Common"">
+                                  <DisplayName>Azure Active Directory</DisplayName>
+                                  <Metadata>
+                                    <Item Key=""ApplicationObjectId"">ExtAppObjectId</Item>
+                                    <Item Key=""ClientId"">ExtAppId</Item>
+                                  </Metadata>
+                                </TechnicalProfile>
+                              </TechnicalProfiles>
+                            </ClaimsProvider>";
+
+            aadCommon = aadCommon.Replace("ExtAppObjectId", _actions.First(kvp => kvp.Name == "Extensions app: objectId").Id);
+            aadCommon = aadCommon.Replace("ExtAppId", _actions.First(kvp => kvp.Name == "Extensions app: appId").Id);
+
+            extFile = extFile.Replace("<ClaimsProviders>", aadCommon);
+
+            //policyList.RemoveAll(kvp => kvp.Key == "B2C_1A_TrustFrameworkExtensions");
+            //policyList.Add(new KeyValuePair<string, string>("B2C_1A_TrustFrameworkExtensions", extFile));
+
+            policyList["B2C_1A_TrustFrameworkExtensions"] = extFile;
+
+            return policyList;
+        }
+
+        private async Task CreateJwtMsTestApp()
+        {
+            var iefTestApp = new
+            {
+                isFallbackPublicClient = false,
+                identifierUris = new List<string>() { $"https://{DomainName}/IEFTestApp" },
+                displayName = "IEF Test App",
+                signInAudience = "AzureADandPersonalMicrosoftAccount",
+                publicClient = new { redirectUris = new List<string>() { $"https://jwt.ms" } },
+                parentalControlSettings = new { legalAgeGroupRule = "Allow" },
+                requiredResourceAccess = new List<object>() {
+                    new {
+                        resourceAppId = "00000003-0000-0000-c000-000000000000",
+                        resourceAccess = new List<object>()
+                        {
+                            new {
+                                    id = "37f7f235-527c-4136-accd-4a02d197296e",
+                                    type = "Scope"
+                                },
+                            new {
+                                    id = "7427e0e9-2fba-42fe-b0c0-848c9e6a8182",
+                                    type = "Scope"
+                                }
+                        }
+                    }
+                },
+                web = new
+                {
+                    implicitGrantSettings = new
+                    {
+                        enableIdTokenIssuance = true,
+                        enableAccessTokenIssuance = true
+                    }
+                }
+            };
+
+            var json = JsonConvert.SerializeObject(iefTestApp);
+            var resp = await _http.PostAsync($"https://graph.microsoft.com/beta/applications",
+                new StringContent(json, Encoding.UTF8, "application/json"));
+
+            if (!resp.IsSuccessStatusCode)
+            {
+                string id = await GetAppIdAsync("IEF Test App");
+                _actions.Add(new IEFObject()
+                {
+                    Name = "IEF Test App Registration",
+                    Id = id,
+                    Status = IEFObject.S.Exists
+                });
+            }
+
+
+            if (resp.IsSuccessStatusCode)
+            {
+                _logger.LogTrace("{0} app created", "iefTestApp");
+
+                string id = await GetAppIdAsync("IEF Test App");
+                _actions.Add(new IEFObject()
+                {
+                    Name = "IEF Test App Registration",
+                    Id = id,
+                    Status = IEFObject.S.New
+                });
+
+
+
+                var sp = new
+                {
+                    accountEnabled = true,
+                    appId = _actions.First(kvp => kvp.Name == "IEF Test App Registration").Id,
+                    appRoleAssignmentRequired = false,
+                    displayName = "IEF Test App",
+                };
+                resp = await _http.PostAsync($"https://graph.microsoft.com/beta/servicePrincipals",
+                    new StringContent(JsonConvert.SerializeObject(sp), Encoding.UTF8, "application/json"));
+                if (!resp.IsSuccessStatusCode) throw new Exception(resp.ReasonPhrase);
+                //AdminConsentUrl = new Uri($"https://login.microsoftonline.com/{tokens.TenantId}/oauth2/authorize?client_id={appIds.ProxyAppId}&prompt=admin_consent&response_type=code&nonce=defaultNonce");
+                _logger.LogTrace("{0} SP created", "IEF Test App");
+            }
+
+        }
+
+        private async Task SetupDummyFacebookSecret(bool removeFb)
+        {
+
+            if (!_keys.Contains($"B2C_1A_FacebookSecret"))
+            {
+                var fbKeySetResp = await _http.PostAsync("https://graph.microsoft.com/beta/trustFramework/keySets",
+                new StringContent(JsonConvert.SerializeObject(new { id = "FacebookSecret" }), Encoding.UTF8, "application/json"));
+
+
+                var fbKeyGenerateResp = await _http.PostAsync("https://graph.microsoft.com/beta/trustFramework/keySets/B2C_1A_FacebookSecret/uploadSecret",
+                new StringContent(JsonConvert.SerializeObject(new { use = "sig", k = "secret", nbf = 1607626546, exp = 4132148146 }), Encoding.UTF8, "application/json"));
+
+                if (fbKeyGenerateResp.IsSuccessStatusCode)
+                {
+                    _actions.Add(new IEFObject()
+                    {
+                        Name = "Facebook secret",
+                        Id = "B2C_FacebookSecret",
+                        Status = IEFObject.S.Uploaded
+                    });
+
+                }
+            }
+            if (_keys.Contains($"B2C_1A_FacebookSecret") & (!removeFb))
+            {
+                _actions.Add(new IEFObject()
+                {
+                    Name = "Facebook secret",
+                    Id = "B2C_FacebookSecret",
+                    Status = IEFObject.S.Exists
+                });
+
+            }
+
+        }
+
         private List<string> _keys;
         private async Task SetupKeysAsync()
         {
@@ -575,7 +606,7 @@ namespace B2CIEFSetupWeb.Utilities
             var kName = $"B2C_1A_{name}";
             if (_keys.Contains($"B2C_1A_{name}"))
             {
-                keySetupState.Status = IEFObject.S.Existing;
+                keySetupState.Status = IEFObject.S.Exists;
                 if (_readOnly) return;
             } else {
                 if (_readOnly) return;
@@ -626,7 +657,7 @@ namespace B2CIEFSetupWeb.Utilities
 
     public class IEFObject
     {
-        public enum S { New, Existing, NotFound, Uploaded, Skipped }
+        public enum S { New, Exists, NotFound, Uploaded, Skipped, Failed }
         public string Name;
         public string Id;
         public S Status;
