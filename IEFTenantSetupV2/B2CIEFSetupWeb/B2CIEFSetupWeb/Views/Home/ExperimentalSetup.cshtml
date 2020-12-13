@@ -1,0 +1,38 @@
+﻿@model SetupState
+@{
+    ViewData["Title"] = "Experimental Setup results";
+}
+    <div class="text-left">
+        <h2 class="display-4">Setup results</h2>
+        <br>
+
+
+    </div>
+    <div class="text-left">
+        <hr />
+        <h4>Setup Report</h4>
+
+        <p>
+            If you believe you attempted to upload a sample which met these conditions, but did not upload successfully,
+            raise an issue <a href="https://github.com/azure-ad-b2c/samples/issues" target="_blank">here</a>.
+        </p>
+
+        <table class="table table-responsive table-hover">
+            <tr>
+                <th>Name</th>
+                <th>Id</th>
+                <th>Status</th>
+                <th>Reason</th>
+            </tr>
+            @foreach (var d in Model.Items)
+            {
+                <tr>
+                    <td>@d.Name</td>
+                    <td>@d.Id</td>
+                    <td>@d.Status</td>
+                    <td>@d.Reason</td>
+                </tr>
+            }
+        </table>
+    </div>
+

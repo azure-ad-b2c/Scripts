@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Identity.Web;
 using B2CIEFSetupWeb.Utilities;
+using System.Net.Http;
+using Newtonsoft.Json.Linq;
 
 namespace B2CIEFSetupWeb.Controllers
 {
@@ -59,11 +61,64 @@ namespace B2CIEFSetupWeb.Controllers
         {
             return View();
         }
-
+        public IActionResult Experimental()
+        {
+            return View(new SetupRequestPolicySample());
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Experimental(SetupRequestPolicySample req)
+        {
+            await _authenticator.ChallengeAsync(
+                Request.HttpContext,
+                "AzureADOpenID",
+                new AuthenticationProperties(
+                    new Dictionary<string, string>()
+                    {
+                        { ".redirect", "/home/ExperimentalSetup?sampleName=" + req.SampleName.ToString() + "&domainName=" + req.DomainName.ToString() +"&fb=null&deployPhoneSignInJourneys=null"}
+                    },
+                    new Dictionary<string, object>()
+                    {
+                        {"tenant", req.DomainName },
+                        //{"admin_consent", true }
+                    }));
+            
+            return View(new SetupRequestPolicySample());
+        }
         public IActionResult Support()
         {
             return View();
         }
+
+
+        [Authorize]
+        public async Task<IActionResult> ExperimentalSetup([FromServices] Utilities.B2CSetup setup, [FromServices] ITokenAcquisition tokenAcquisition)
+        {
+            var samplePolicyStr = Request.Query["sampleName"].First();
+            var dirDomainName = Request.Query["domainName"].First();
+            var InitialisePhoneSignInJourneysStr = Request.Query["deployPhoneSignInJourneys"].First();
+            var tenantId = User.Claims.First(c => c.Type == "http://schemas.microsoft.com/identity/claims/tenantid").Value;
+            //var token = await tokenAcquisition.GetAccessTokenOnBehalfOfUserAsync(Constants.Scopes, tenantId);
+            bool removeFb = false;
+            bool initialisePhoneSignInJourneys = false;
+            var res = await setup.SetupAsync(tenantId, removeFb, dirDomainName, initialisePhoneSignInJourneys, samplePolicyStr);
+            var model = new SetupState();
+            foreach (var item in res)
+            {
+                model.Items.Add(new ItemSetupState()
+                {
+                    Name = item.Name,
+                    Id = (String.IsNullOrEmpty(item.Id) ? "-" : item.Id),
+                    Status = item.Status == IEFObject.S.Exists ? "Exists" : item.Status == IEFObject.S.New ? "New" : item.Status == IEFObject.S.Uploaded ? "Uploaded" : item.Status == IEFObject.S.Failed ? "Failed" : item.Status == IEFObject.S.Skipped ? "Skipped" : "Not found",
+                    Reason = (String.IsNullOrEmpty(item.Reason) ? "-" : item.Reason)
+                });
+            }
+
+            //string testAppConsentAppId = res.First(kvp => kvp.Name == "IEF Test App Registration").Id;
+
+            return View(model);
+        }
+
 
         [Authorize]
         public async Task<IActionResult> Setup([FromServices] Utilities.B2CSetup setup, [FromServices] ITokenAcquisition tokenAcquisition)
@@ -78,7 +133,7 @@ namespace B2CIEFSetupWeb.Controllers
             var tenantId = User.Claims.First(c => c.Type == "http://schemas.microsoft.com/identity/claims/tenantid").Value;
             //var token = await tokenAcquisition.GetAccessTokenOnBehalfOfUserAsync(Constants.Scopes, tenantId);
 
-            var res = await setup.SetupAsync(tenantId, removeFb, dirDomainName, initialisePhoneSignInJourneys);
+            var res = await setup.SetupAsync(tenantId, removeFb, dirDomainName, initialisePhoneSignInJourneys, "null");
             var model = new SetupState();
             foreach(var item in res)
             {
@@ -86,7 +141,8 @@ namespace B2CIEFSetupWeb.Controllers
                 {
                     Name = item.Name,
                     Id = (String.IsNullOrEmpty(item.Id)? "-": item.Id),
-                    Status = item.Status == IEFObject.S.Exists? "Exists": item.Status == IEFObject.S.New ? "New" : item.Status == IEFObject.S.Uploaded ? "Uploaded" : item.Status == IEFObject.S.Failed ? "Failed" : item.Status == IEFObject.S.Skipped ? "Skipped" : "Not found"
+                    Status = item.Status == IEFObject.S.Exists? "Exists": item.Status == IEFObject.S.New ? "New" : item.Status == IEFObject.S.Uploaded ? "Uploaded" : item.Status == IEFObject.S.Failed ? "Failed" : item.Status == IEFObject.S.Skipped ? "Skipped" : "Not found",
+                    Reason = (String.IsNullOrEmpty(item.Reason) ? "-" : item.Reason)
                 });
             }
 

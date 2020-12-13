@@ -1,0 +1,54 @@
+﻿@model SetupRequestPolicySample
+@{
+    ViewData["Title"] = "Experimental";
+}
+
+<h1>Experimental</h1>
+
+<p>
+    This experimental section will deploy a policy from the <a href="https://github.com/azure-ad-b2c/samples" target="_blank">Azure AD B2C Samples GitHub</a> automatically to your Azure AD B2C directory.
+    
+</p>
+
+<ul>
+    <li>You must have run the <a href="https://aka.ms/iefsetup" target="_blank">initial setup</a> before continuing with this page.</li>
+
+    <li>
+        You cannot use this to deploy any Policy Sample that relies on Policy Keys (External IdP's/REST API's), unless the Policy Keys already exist within the directory prior to deployment.
+    </li>
+    <li>
+        You cannot use this to deploy any Policy Sample that relies on JavaScript page contracts (unless you've already enabled page contracts).
+    </li>
+</ul>
+</p>
+    If you believe you attempted to upload a sample which met these conditions, but did not upload successfully,
+    raise an issue <a href="https://github.com/azure-ad-b2c/samples/issues" target="_blank">here</a>.
+</p>
+
+<hr />
+
+
+
+
+<form asp-action="Experimental" asp-controller="Home">
+    <label asp-for="DomainName"></label>
+    <p><input asp-for="DomainName" placeholder="yourdomain" style="text-align: right" />.onmicrosoft.com</p>
+    <label asp-for="SampleName"></label>
+    <p><input asp-for="SampleName" placeholder="banned-password-list-no-API" style="text-align: left" /></p>
+    <input type="submit" />
+</form>
+
+<hr />
+<h4>Possible sample values</h4>
+
+<table class="table table-responsive table-hover">
+    <tr>
+        <th>Name</th>
+    </tr>
+    @foreach (var name in Model.SampleValues)
+    {
+        <tr>
+            <td>@name.Name</td>
+        </tr>
+    }
+</table>

@@ -10,6 +10,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
@@ -18,7 +19,7 @@ namespace B2CIEFSetupWeb.Utilities
 {
     public interface IB2CSetup
     {
-        Task<List<IEFObject>> SetupAsync(string domainId, bool readOnly, string dirDomainName, bool initialisePhoneSignInJourneys);
+        Task<List<IEFObject>> SetupAsync(string domainId, bool readOnly, string dirDomainName, bool initialisePhoneSignInJourneys, string PolicySample);
     }
     public class B2CSetup : IB2CSetup
     {
@@ -33,13 +34,13 @@ namespace B2CIEFSetupWeb.Utilities
         public string DomainName { get; private set; }
         private bool _readOnly = false;
         private bool _removeFb = false;
-
-        public async Task<List<IEFObject>> SetupAsync(string domainId, bool removeFb, string dirDomainName, bool initialisePhoneSignInJourneys)
+        public string PolicySample { get; private set; }
+        public async Task<List<IEFObject>> SetupAsync(string domainId, bool removeFb, string dirDomainName, bool initialisePhoneSignInJourneys, string PolicySample )
         {
             using (_logger.BeginScope("SetupAsync: {0} - Read only: {1}", domainId, removeFb))
             {
-                _removeFb = removeFb;
-                try
+                _actions = new List<IEFObject>();
+                if (PolicySample != "null")
                 {
                     var token = await _tokenAcquisition.GetAccessTokenOnBehalfOfUserAsync(
                         Constants.ReadWriteScopes,
@@ -47,103 +48,161 @@ namespace B2CIEFSetupWeb.Utilities
                     _http = new HttpClient();
                     _http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-                    _actions = new List<IEFObject>();
-                    await SetupIEFAppsAsync(domainId);
-                    await SetupKeysAsync();
-                    var extAppId = await GetAppIdAsync("b2c-extensions-app");
-                    _actions.Add(new IEFObject()
+                    HttpClient _httpToRepoAPI = new HttpClient();
+                    string urlToFetchPolices = "https://-/api/FetchRepo?policyname=" + PolicySample;
+                    var json = await _httpToRepoAPI.GetStringAsync(urlToFetchPolices);
+                    var value = JArray.Parse(json);
+
+                    var rawPolicyFileNames = new List<string>();
+                    foreach (string url in value)
                     {
-                        Name = "Extensions app: appId",
-                        Id = extAppId,
-                        Status = String.IsNullOrEmpty(extAppId) ? IEFObject.S.NotFound : IEFObject.S.Exists
-                    });
-                    extAppId = await GetAppIdAsync("b2c-extensions-app", true);
-                    _actions.Add(new IEFObject()
+                        rawPolicyFileNames.Add(url);
+                    }
+                    //if we found ext file, move to top
+                    var regexExtensions = @"\w*Extensions\w*";
+                    var indexExtensions = -1;
+                    indexExtensions = rawPolicyFileNames.FindIndex(d => regexExtensions.Any(s => Regex.IsMatch(d.ToString(), regexExtensions)));
+                    if (indexExtensions > -1)
                     {
-                        Name = "Extensions app: objectId",
-                        Id = extAppId,
-                        Status = String.IsNullOrEmpty(extAppId) ? IEFObject.S.NotFound : IEFObject.S.Exists
-                    });
-                } catch(Exception ex)
-                {
-                    _logger.LogError(ex, "SetupAsync failed");
+                        rawPolicyFileNames.Insert(0, rawPolicyFileNames[indexExtensions]);
+                        rawPolicyFileNames.RemoveAt(indexExtensions + 1);
+                    }
+                    //if we found base file, move to top
+                    var regexBase = @"\w*Base\w*";
+                    var indexBase = -1;
+                    indexBase = rawPolicyFileNames.FindIndex(d => regexBase.Any(s => Regex.IsMatch(d.ToString(), regexBase)));
+                    if (indexBase > -1)
+                    {
+                        rawPolicyFileNames.Insert(0, rawPolicyFileNames[indexBase]);
+                        rawPolicyFileNames.RemoveAt(indexBase + 1);
+                    }
+                    var policyFileList = new List<string>();
+
+                    foreach (string url in rawPolicyFileNames) {                     
+                        policyFileList.Add(new WebClient().DownloadString(url));
+                        }
+
+                    for (int i = 0; i < policyFileList.Count; i++)
+                    {
+                        policyFileList[i] = policyFileList[i].Replace("yourtenant.onmicrosoft.com", dirDomainName + ".onmicrosoft.com");
+                    }
+
+
+                    //build k-v pair list of policyId:policyFilen
+                    var policyList = buildPolicyListByPolicyId(policyFileList);
+                    await UploadPolicyFiles(policyList);
+                    return _actions;
                 }
 
 
-                //actions structure
+                if (PolicySample == "null") { 
+                    _removeFb = removeFb;
+                    try
+                    {
+                        var token = await _tokenAcquisition.GetAccessTokenOnBehalfOfUserAsync(
+                            Constants.ReadWriteScopes,
+                            domainId);
+                        _http = new HttpClient();
+                        _http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+                    
+                        await SetupIEFAppsAsync(domainId);
+                        await SetupKeysAsync();
+                        var extAppId = await GetAppIdAsync("b2c-extensions-app");
+                        _actions.Add(new IEFObject()
+                        {
+                            Name = "Extensions app: appId",
+                            Id = extAppId,
+                            Status = String.IsNullOrEmpty(extAppId) ? IEFObject.S.NotFound : IEFObject.S.Exists
+                        });
+                        extAppId = await GetAppIdAsync("b2c-extensions-app", true);
+                        _actions.Add(new IEFObject()
+                        {
+                            Name = "Extensions app: objectId",
+                            Id = extAppId,
+                            Status = String.IsNullOrEmpty(extAppId) ? IEFObject.S.NotFound : IEFObject.S.Exists
+                        });
+                    } catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "SetupAsync failed");
+                    }
+
+
+                    //actions structure
                     //ief app 0
                     //proxyief app 1
                     //extension appid 4
                     //extension objectId 5
 
 
-                //download localAndSocialStarterPack
-                // returns list policyId: policyXML
-                var policyList = GetPolicyFiles(removeFb, dirDomainName, initialisePhoneSignInJourneys);
+                    //download localAndSocialStarterPack
+                    // returns list policyId: policyXML
+                    var policyList = GetPolicyFiles(removeFb, dirDomainName, initialisePhoneSignInJourneys);
 
-                // Strip UJs from SocialLocalMFA base file
-                // Take UJs from Local base file and put it in Extensions file
+                    // Strip UJs from SocialLocalMFA base file
+                    // Take UJs from Local base file and put it in Extensions file
 
-                if (removeFb)
-                {
-                    // Remove default social and local and mfa user journeys
-                    XmlDocument socialAndLocalBase = new XmlDocument();
-                    socialAndLocalBase.LoadXml(policyList.First(kvp => kvp.Key == "B2C_1A_TrustFrameworkBase").Value);
-                    var nsmgr = new XmlNamespaceManager(socialAndLocalBase.NameTable);
-                    nsmgr.AddNamespace("xsl", "http://schemas.microsoft.com/online/cpim/schemas/2013/06");
+                    if (removeFb)
+                    {
+                        // Remove default social and local and mfa user journeys
+                        XmlDocument socialAndLocalBase = new XmlDocument();
+                        socialAndLocalBase.LoadXml(policyList.First(kvp => kvp.Key == "B2C_1A_TrustFrameworkBase").Value);
+                        var nsmgr = new XmlNamespaceManager(socialAndLocalBase.NameTable);
+                        nsmgr.AddNamespace("xsl", "http://schemas.microsoft.com/online/cpim/schemas/2013/06");
 
-                    XmlNode socialAndMFAJourneys = socialAndLocalBase.SelectSingleNode("/xsl:TrustFrameworkPolicy/xsl:UserJourneys", nsmgr);
-                    socialAndMFAJourneys.RemoveAll();
-                    XmlNode parentSocialAndMFAJourneys = socialAndMFAJourneys.ParentNode;
-                    parentSocialAndMFAJourneys.RemoveChild(socialAndMFAJourneys);
+                        XmlNode socialAndMFAJourneys = socialAndLocalBase.SelectSingleNode("/xsl:TrustFrameworkPolicy/xsl:UserJourneys", nsmgr);
+                        socialAndMFAJourneys.RemoveAll();
+                        XmlNode parentSocialAndMFAJourneys = socialAndMFAJourneys.ParentNode;
+                        parentSocialAndMFAJourneys.RemoveChild(socialAndMFAJourneys);
 
-                    XmlNode facebookTP = socialAndLocalBase.SelectSingleNode("/xsl:TrustFrameworkPolicy/xsl:ClaimsProviders/xsl:ClaimsProvider[1]", nsmgr);
-                    facebookTP.RemoveAll();
-                    XmlNode parentfacebookTP = facebookTP.ParentNode;
-                    parentfacebookTP.RemoveChild(facebookTP);
+                        XmlNode facebookTP = socialAndLocalBase.SelectSingleNode("/xsl:TrustFrameworkPolicy/xsl:ClaimsProviders/xsl:ClaimsProvider[1]", nsmgr);
+                        facebookTP.RemoveAll();
+                        XmlNode parentfacebookTP = facebookTP.ParentNode;
+                        parentfacebookTP.RemoveChild(facebookTP);
 
-                    //policyList.RemoveAll(kvp => kvp.Key == "B2C_1A_TrustFrameworkBase");
-                    policyList["B2C_1A_TrustFrameworkBase"] = socialAndLocalBase.OuterXml;
-                    //policyList.Add(new KeyValuePair<string, string>("B2C_1A_TrustFrameworkBase", socialAndLocalBase.OuterXml));
+                        //policyList.RemoveAll(kvp => kvp.Key == "B2C_1A_TrustFrameworkBase");
+                        policyList["B2C_1A_TrustFrameworkBase"] = socialAndLocalBase.OuterXml;
+                        //policyList.Add(new KeyValuePair<string, string>("B2C_1A_TrustFrameworkBase", socialAndLocalBase.OuterXml));
 
-                    // Insert user journeys from LocalAccounts base file into Ext file.
-                    XmlDocument localBase = new XmlDocument();
-                    string baseFileLocal = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/TrustFrameworkBase.xml");
-                    localBase.LoadXml(baseFileLocal);
-                    XmlNode localBaseJourneys = localBase.SelectSingleNode("/xsl:TrustFrameworkPolicy/xsl:UserJourneys", nsmgr);
+                        // Insert user journeys from LocalAccounts base file into Ext file.
+                        XmlDocument localBase = new XmlDocument();
+                        string baseFileLocal = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/TrustFrameworkBase.xml");
+                        localBase.LoadXml(baseFileLocal);
+                        XmlNode localBaseJourneys = localBase.SelectSingleNode("/xsl:TrustFrameworkPolicy/xsl:UserJourneys", nsmgr);
 
-                    string localJourneysString = localBaseJourneys.OuterXml;
-                    localJourneysString.Replace("<UserJourneys xmlns=\"http://schemas.microsoft.com/online/cpim/schemas/2013/06\">", "<UserJourneys>");
-                    string extFile = policyList.First(kvp => kvp.Key == "B2C_1A_TrustFrameworkExtensions").Value;
-                    extFile = extFile.Replace("</TrustFrameworkPolicy>", localJourneysString + "</TrustFrameworkPolicy>");
-                    extFile.Replace("yourtenant.onmicrosoft.com", dirDomainName + ".onmicrosoft.com");
+                        string localJourneysString = localBaseJourneys.OuterXml;
+                        localJourneysString.Replace("<UserJourneys xmlns=\"http://schemas.microsoft.com/online/cpim/schemas/2013/06\">", "<UserJourneys>");
+                        string extFile = policyList.First(kvp => kvp.Key == "B2C_1A_TrustFrameworkExtensions").Value;
+                        extFile = extFile.Replace("</TrustFrameworkPolicy>", localJourneysString + "</TrustFrameworkPolicy>");
+                        extFile.Replace("yourtenant.onmicrosoft.com", dirDomainName + ".onmicrosoft.com");
 
-                    //policyList.RemoveAll(kvp => kvp.Key == "B2C_1A_TrustFrameworkExtensions");
-                    //policyList.Add(new KeyValuePair<string, string>("B2C_1A_TrustFrameworkExtensions", extFile));
+                        //policyList.RemoveAll(kvp => kvp.Key == "B2C_1A_TrustFrameworkExtensions");
+                        //policyList.Add(new KeyValuePair<string, string>("B2C_1A_TrustFrameworkExtensions", extFile));
 
-                    policyList["B2C_1A_TrustFrameworkExtensions"] = extFile;
+                        policyList["B2C_1A_TrustFrameworkExtensions"] = extFile;
 
-                }
+                    }
 
-            // setup login-noninteractive and ext attribute support
-            policyList = SetupAADCommon(policyList, initialisePhoneSignInJourneys);
+                    // setup login-noninteractive and ext attribute support
+                    policyList = SetupAADCommon(policyList, initialisePhoneSignInJourneys);
 
-            if (!removeFb)
-            {
-                await SetupDummyFacebookSecret(removeFb);
-            }
-            else
-            {
-                _actions.Add(new IEFObject()
-                {
-                    Name = "Facebook secret",
-                    Id = "B2C_FacebookSecret",
-                    Status = IEFObject.S.Skipped
-                });
-            }
+                    if (!removeFb)
+                    {
+                        await SetupDummyFacebookSecret(removeFb);
+                    }
+                    else
+                    {
+                        _actions.Add(new IEFObject()
+                        {
+                            Name = "Facebook secret",
+                            Id = "B2C_FacebookSecret",
+                            Status = IEFObject.S.Skipped
+                        });
+                    }
 
-            await UploadPolicyFiles(policyList);
-            await CreateJwtMsTestApp();
+                    await UploadPolicyFiles(policyList);
+                    await CreateJwtMsTestApp();
+                } 
             }
             return _actions;
         }
@@ -415,7 +474,8 @@ namespace B2CIEFSetupWeb.Utilities
                     {
                         Name = "Policy",
                         Id = policyFileId,
-                        Status = IEFObject.S.Failed
+                        Status = IEFObject.S.Failed,
+                        Reason =  resp.ReasonPhrase
                     });
 
                 }
@@ -661,5 +721,6 @@ namespace B2CIEFSetupWeb.Utilities
         public string Name;
         public string Id;
         public S Status;
+        public string Reason;
     }
 }

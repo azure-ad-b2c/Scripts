@@ -21,5 +21,6 @@ namespace B2CIEFSetupWeb.Models
         public string Name;
         public string Id;
         public string Status;
+        public string Reason;
     }
 }
