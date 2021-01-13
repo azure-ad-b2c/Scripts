@@ -3434,8 +3434,8 @@ foreach( $uj in $ext.TrustFrameworkPolicy.UserJourneys.UserJourney) {
     $uj.Id
     $order = 1
     foreach( $steps in $uj.OrchestrationSteps ) {
-        foreach( $step in $steps ) {
-            $step.OrchestrationStep[0].Order = "$order"
+        foreach( $step in $steps.OrchestrationStep ) {
+            $step.Order = "$order"
             $order++
         }        
     }
