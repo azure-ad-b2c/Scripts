@@ -3441,5 +3441,5 @@ foreach( $uj in $ext.TrustFrameworkPolicy.UserJourneys.UserJourney) {
     }
 }
 
-$ext.Save("$PolicyPath/$ExtPolicyFileName")
+$ext.Save("$PolicyPath/$PolicyFile")
 }
