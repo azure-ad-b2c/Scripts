@@ -395,11 +395,11 @@ function Get-AzureADB2CPolicyId
     $oauthBody  = @{grant_type="client_credentials";resource="https://graph.microsoft.com/";client_id=$AppID;client_secret=$AppKey;scope="Policy.ReadWrite.TrustFramework"}
     $oauth      = Invoke-RestMethod -Method Post -Uri "https://login.microsoft.com/$tenantName/oauth2/token?api-version=1.0" -Body $oauthBody
     
-    write-host "Getting policy $PolicyId..."
+    #write-host "Getting policy $PolicyId..."
     $url = "https://graph.microsoft.com/beta/trustFramework/policies/$PolicyId/`$value"
     $resp = Invoke-RestMethod -Method GET -Uri $url -ContentType "application/xml" -Headers @{'Authorization'="$($oauth.token_type) $($oauth.access_token)"} 
     if ( "" -eq $PolicyFile ) {
-        write-host $resp.OuterXml
+        return $resp.OuterXml
     } else {
         Set-Content -Path $PolicyFile -Value $resp.OuterXml 
     }
@@ -822,12 +822,12 @@ function Set-AzureADB2CCustomizeUX
             $i1 = $contDef.InnerXml.IndexOf("<RecoveryUri" )
             $i2 = $contDef.InnerXml.IndexOf("</RecoveryUri>" )
             if ( $i2 -gt $i1 ) {
-                $contDef.InnerXml = $contDef.InnerXml.SubString(0,$i1) + $contDef.InnerXml.SubString($i2+14) 
+                $contDef.InnerXml = $contDef.InnerXml.SubString(0,$i1) + $contDef.InnerXml.SubString($i2+"</RecoveryUri>".Length) 
             }
             $i1 = $contDef.InnerXml.IndexOf("<LoadUri" )
             $i2 = $contDef.InnerXml.IndexOf("</LoadUri>" )
             if ( $i2 -gt $i1 ) {
-                $contDef.InnerXml = $contDef.InnerXml.SubString(0,$i1) + $contDef.InnerXml.SubString($i2+14) 
+                $contDef.InnerXml = $contDef.InnerXml.SubString(0,$i1) + $contDef.InnerXml.SubString($i2+"</LoadUri>".Length) 
             }
             $contDef.RemoveChild( $contDef.Metadata ) | Out-null
         }
@@ -3442,4 +3442,114 @@ foreach( $uj in $ext.TrustFrameworkPolicy.UserJourneys.UserJourney) {
 }
 
 $ext.Save("$PolicyPath/$PolicyFile")
+}
+
+<#
+.SYNOPSIS
+    Get the Tenant Region
+
+.DESCRIPTION
+    Get the Tenant Region
+
+.EXAMPLE
+    Get-AzureADB2CTenantRegion
+
+#>
+function Get-AzureADB2CTenantRegion
+(
+    [Parameter(Mandatory=$false)][Alias('t')][string]$TenantName = ""
+    )
+{
+
+if ( "" -eq $TenantName ) { $TenantName = $global:TenantName }
+
+$resp = Invoke-RestMethod -Uri "https://login.microsoft.com/$TenantName/v2.0/.well-known/openid-configuration"
+$tenantRegion = $resp.tenant_region_scope
+return $tenantRegion
+}
+
+<#
+.SYNOPSIS
+    Get the B2C Policy file inheritance tree
+
+.DESCRIPTION
+    Get the B2C Policy file inheritance tree and returns it as an object or draws it like a tree
+
+.EXAMPLE
+    Get-AzureADB2CPolicyTree 
+
+.EXAMPLE
+    Get-AzureADB2CPolicyTree -DrawTree$True
+
+#>
+function Get-AzureADB2CPolicyTree
+(
+    [Parameter(Mandatory=$false)][Alias('t')][string]$TenantName = "",
+    [Parameter(Mandatory=$false)][Alias('a')][string]$AppID = "",
+    [Parameter(Mandatory=$false)][Alias('k')][string]$AppKey = "",
+    [Parameter(Mandatory=$false)][switch]$DrawTree = $False
+    )
+{
+    $oauth = $null
+    if ( "" -eq $AppID ) { $AppID = $env:B2CAppId }
+    if ( "" -eq $AppKey ) { $AppKey = $env:B2CAppKey }
+    if ( "" -eq $TenantName ) { $TenantName = $global:TenantName }
+
+    write-host "Getting a list of policies..."
+
+    # https://docs.microsoft.com/en-us/azure/active-directory/users-groups-roles/directory-assign-admin-roles#b2c-user-flow-administrator
+    # get an access token for the B2C Graph App
+    $oauthBody  = @{grant_type="client_credentials";resource="https://graph.microsoft.com/";client_id=$AppID;client_secret=$AppKey;scope="Policy.Read.TrustFramework"}
+    $oauth      = Invoke-RestMethod -Method Post -Uri "https://login.microsoft.com/$tenantName/oauth2/token?api-version=1.0" -Body $oauthBody
+    
+    $url = "https://graph.microsoft.com/beta/trustFramework/policies"
+    $resp = Invoke-RestMethod -Method GET -Uri $url -ContentType "application/xml" -Headers @{'Authorization'="$($oauth.token_type) $($oauth.access_token)"} 
+    $policies = $resp.value
+
+    $arr = @()
+
+    write-host "Getting policy details..."
+    foreach( $id in $policies.Id) {
+        $url = "https://graph.microsoft.com/beta/trustFramework/policies/$Id/`$value"
+        $resp = Invoke-RestMethod -Method GET -Uri $url -ContentType "application/xml" -Headers @{'Authorization'="$($oauth.token_type) $($oauth.access_token)"} 
+        [xml]$policy = $resp.OuterXml
+        $policyObj = New-Object System.Object
+        $policyObj | Add-Member -type NoteProperty -name "PolicyId" -Value $policy.TrustFrameworkPolicy.PolicyId
+        $policyObj | Add-Member -type NoteProperty -name "BasePolicyId" -Value $policy.TrustFrameworkPolicy.BasePolicy.PolicyId
+        $policyObj | Add-Member -type NoteProperty -name "ReferencedBy" -Value @()
+        $arr += $policyObj
+    }
+
+    function SetReferencedByPolicy( $policyObj ) {
+        $refs = ($arr | where {$_.BasePolicyId -eq $policyObj.PolicyId}).PolicyId
+        if ( $null -ne $refs ) {
+            $policyObj.ReferencedBy += $refs
+            foreach( $refId in $policyObj.ReferencedBy ) {
+                $refObj = ($arr | where {$_.PolicyId -eq $refId})
+                SetReferencedByPolicy $refObj
+            }
+        }
+    }
+
+    # walk through the policies with no base
+    foreach( $basePolicy in ($arr | where {$_.BasePolicyId -eq $Null }) ) {
+        SetReferencedByPolicy $basePolicy
+    }
+
+    if ( $DrawTree ) {
+        function DrawInheritance( $policyId, $indent ) {
+            $obj = ($arr | where {$_.PolicyId -eq $PolicyId})
+            write-output "$indent $($obj.PolicyId)" 
+            foreach( $refId in $obj.ReferencedBy ) {
+                DrawInheritance $refId "$indent  "
+            }
+        }
+        foreach( $basePolicy in ($arr | where {$_.BasePolicyId -eq $Null }) ) {
+            DrawInheritance $basePolicy.PolicyId ""
+            write-output ""
+        }
+
+    } else {
+        return $arr
+    }
 }

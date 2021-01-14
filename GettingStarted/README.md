@@ -125,6 +125,7 @@ See Get-Help <command> for details
 | `Get-AzureADB2CCustomDomain` | Lists all available custom domain names for the current tenant. |                     
 | `Get-AzureADB2CExtensionAttributesForUser` | Get extension attributes for user |      
 | `Get-AzureADB2CPolicyId` | Gets a B2C Custom Policy from the tenant policy store by PolicyId |
+| `Get-AzureADB2CPolicyTree` | Get the B2C Policy file inheritance tree and returns it as an object or draws it like a tree |
 | `Get-AzureADB2CStarterPack` | Downloads the Azure AD B2C Custom Policy [Starter Pack](https://github.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack) |                     
 | `List-AzureADB2CPolicyIds` | Lists B2C Custom Policies from the tenant policy |
 | `New-AzureADB2CExtensionAttribute` | Registers an extension attribute in the B2C tenant |              
