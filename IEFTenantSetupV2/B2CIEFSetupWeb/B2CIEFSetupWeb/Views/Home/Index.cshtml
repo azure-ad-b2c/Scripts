@@ -13,10 +13,11 @@
         <ul>
             <li>
                 The application will automate the entire process from:
-                <a href="https://aka.ms/ief" target="_blank">Get started with custom policies in Azure Active Directory B2C</a>.
+                <a href="https://aka.ms/ief" target="_blank">Get started with custom policies in Azure Active Directory B2C</a>. It will deploy the Social, Local and MFA files, with Local Account journeys. 
+                This allows you to build upon these foundations without any missing dependancies.
             </li>
 
-            <li>And it will integrate Extension Attribute support from: <a href="https://docs.microsoft.com/en-us/azure/active-directory-b2c/custom-policy-custom-attributes#create-a-new-application-to-store-the-extension-properties" target="_blank"> Enable custom attributes in a custom profile policy</a>.</li>
+            <li>It will integrate Extension Attribute support from: <a href="https://docs.microsoft.com/en-us/azure/active-directory-b2c/custom-policy-custom-attributes#create-a-new-application-to-store-the-extension-properties" target="_blank"> Enable custom attributes in a custom profile policy</a>.</li>
 
             <li>After completing this setup, you will be able to use the <a href="https://github.com/azure-ad-b2c/samples" target="_blank">Azure AD B2C IEF Sample Policies</a>.</li>
         </ul>
@@ -29,7 +30,8 @@
         <ol>
             <li>Enter your Azure AD B2C directory name.</li>
 
-            <li>You will be asked to sign in. Make sure to sign in with an account with Global Admin rights to the B2C tenant. <b>Use only work/school or local (to the B2C tenant: xyz@tenant.onmicrosoft.com) account.</b></li>
+            <li>You will be asked to sign in. Make sure to sign in with an Azure AD Work Or School account residing in the directory with Global Admin rights to the B2C tenant. <br />
+            It will not work with Microsoft Personal accounts.</li>
             <li>
                 You will be asked to consent to a number of permissions needed to create applications, service principals and security keys in your tenant.
                 You will need to consent for the app to complete the setup.
@@ -46,18 +48,23 @@
             <li>
                 <b>Deploy Phone SignIn Journeys</b> - Deploys the <a href="https://github.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/tree/master/scenarios/phone-number-passwordless" target="_blank">Phone Sign In/Up passwordless journeys</a> in addition to the LocalAndSocialWithMFA starter pack.
             </li>
+            <li>
+                <b>Enable JavaScript</b> - Enables the custom policies to support <a href="https://docs.microsoft.com/en-us/azure/active-directory-b2c/javascript-and-page-layout?pivots=b2c-custom-policy#select-a-page-layout-version" target="_blank">JavaScript execution on your custom HTML pages</a>.
+            </li>
         </ol>
         <hr />
         <h4>Begin setup:</h4>
         <form asp-action="Index" asp-controller="Home">
             <label asp-for="DomainName"></label>
-            <p><input asp-for="DomainName" placeholder="yourdomain" style="text-align: right" />.onmicrosoft.com</p>
+            <p><input asp-for="DomainName" placeholder="yourdomain" style="text-align: right" required: true />.onmicrosoft.com</p>
             <p>
                 <label asp-for="RemoveFacebookReferences"></label>
                 <input asp-for="RemoveFacebookReferences" /><br />
                 <label asp-for="InitialisePhoneSignInJourneys"></label>
-                <input asp-for="InitialisePhoneSignInJourneys" />
+                <input asp-for="InitialisePhoneSignInJourneys" /><br />
+                <label asp-for="EnableJavaScript"></label>
+                <input asp-for="EnableJavaScript" />
             </p>
-            <input type="submit" />
+            <input type="submit" value="Deploy custom policy starter pack"/>
         </form>
     </div>

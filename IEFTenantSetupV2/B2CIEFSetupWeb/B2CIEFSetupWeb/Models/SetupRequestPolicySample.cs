@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -29,20 +30,27 @@ namespace B2CIEFSetupWeb.Models
 
         public class Samples
         {
-            public string Name;
+            public string displayName;
+            public string folderName;
+            public string description;
         }
         public SetupRequestPolicySample()
         {
             SampleValues = new List<Samples>();
             HttpClient httpToRepoAPI = new HttpClient();
-            string urlToFetchPolices = "https://-/api/FetchRepo/all";
+            string urlToFetchPolices = "https://gitrepomanager.azurewebsites.net/api/FetchRepo/all"; //https://localhost:44358/api/FetchRepo/all, "https://gitrepomanager.azurewebsites.net/api/FetchRepo/all"
+            //string urlToFetchPolices = "https://localhost:44358/api/FetchRepo/all";
             var json = new WebClient().DownloadString(urlToFetchPolices);
-            var value = JArray.Parse(json);
-
-            foreach (string name in value)
+            //var value = JArray.Parse(json);
+            //var value = JObject.Parse(json);
+            //Root myPolicyRows = JsonConvert.DeserializeObject<Root>(json);
+            var myPolicyRows = PolicyRow.FromJson(json);
+            foreach (var item in myPolicyRows)
             {
                 Samples sample = new Samples();
-                sample.Name = name;
+                sample.displayName = item.DisplayName;
+                sample.folderName = item.FolderName;
+                sample.description = item.Description;
                 SampleValues.Add(sample);
 
             }

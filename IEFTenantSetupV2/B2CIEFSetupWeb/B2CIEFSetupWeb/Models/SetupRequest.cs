@@ -22,5 +22,10 @@ namespace B2CIEFSetupWeb.Models
         [DisplayName("Deploy Phone SignIn Journeys")]
         public bool InitialisePhoneSignInJourneys{ get; set; }
 
-}
+
+        [Required]
+        [DisplayName("Enable JavaScript")]
+        public bool EnableJavaScript { get; set; }
+
+    }
 }

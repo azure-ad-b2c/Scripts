@@ -19,11 +19,31 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Identity.Web.TokenCacheProviders.Session;
 using Microsoft.Identity.Web.TokenCacheProviders.Distributed;
 using Microsoft.Identity.Web.TokenCacheProviders.InMemory;
+using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.ApplicationInsights.Channel;
+using Microsoft.ApplicationInsights.DataContracts;
 
 namespace B2CIEFSetupWeb
 {
     public class Startup
     {
+        public class MyCustomTelemetryInitializer : ITelemetryInitializer
+        {
+            readonly IHttpContextAccessor _httpContextAccessor;
+
+            public MyCustomTelemetryInitializer(IHttpContextAccessor httpContextAccessor)
+            {
+                _httpContextAccessor = httpContextAccessor;
+            }
+
+            public void Initialize(ITelemetry telemetry)
+            {
+                if (telemetry is RequestTelemetry requestTelemetry)
+                {
+                    requestTelemetry.Context.User.Id = _httpContextAccessor.HttpContext.Request.Headers["User-Agent"];
+                }
+            }
+        }
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -81,12 +101,14 @@ namespace B2CIEFSetupWeb
                 {
                     var tenant = context.Properties.GetParameter<string>("tenant");
                     var readOnly = context.Properties.GetParameter<bool>("readOnly");
+                    var domainHint = context.Properties.GetParameter<string>("domainHint");
                     //var consent = context.Properties.GetParameter<bool>("admin_consent");
                     //if (consent)
                     //    context.ProtocolMessage.IssuerAddress = $"https://login.microsoftonline.com/{tenant}.onmicrosoft.com/v2.0/adminconsent";
                     //else
-                        context.ProtocolMessage.IssuerAddress = $"https://login.microsoftonline.com/{tenant}.onmicrosoft.com/oauth2/v2.0/authorize";
+                    context.ProtocolMessage.IssuerAddress = $"https://login.microsoftonline.com/{tenant}.onmicrosoft.com/oauth2/v2.0/authorize";
                     //context.ProtocolMessage.Parameters.Add("scopes", "test");
+                    context.ProtocolMessage.DomainHint = domainHint;
                     context.ProtocolMessage.Scope = context.ProtocolMessage.Scope.Replace("offline_access", ""); // not needed
                     //TODO: use StringBuilder
                     if (readOnly)
@@ -140,6 +162,8 @@ namespace B2CIEFSetupWeb
             });
             services.AddRazorPages();
             services.AddApplicationInsightsTelemetry();
+            services.AddSingleton<ITelemetryInitializer, MyCustomTelemetryInitializer>();
+            services.AddMvc();
         }
 
         private static void UpdateScopes(ICollection<string> currScopes, bool readOnly)

@@ -1,26 +1,30 @@
 ﻿@model SetupRequestPolicySample
 @{
     ViewData["Title"] = "Experimental";
+    var data = (sampleFolderBootstrap)ViewData["Message"];
 }
-
 <h1>Experimental</h1>
 
 <p>
     This experimental section will deploy a policy from the <a href="https://github.com/azure-ad-b2c/samples" target="_blank">Azure AD B2C Samples GitHub</a> automatically to your Azure AD B2C directory.
-    
+
 </p>
 
 <ul>
-    <li>You must have run the <a href="https://aka.ms/iefsetup" target="_blank">initial setup</a> before continuing with this page.</li>
+    <li><b>You must have run the <a href="https://aka.ms/iefsetup" target="_blank">initial setup</a> before continuing with this page.</b></li>
+
+    <li>
+        This process can sometimes overwrite the Base and Extension files deployed via the Initial Setup. You can safely run the Initial Setup again to restore them.
+    </li>
 
     <li>
         You cannot use this to deploy any Policy Sample that relies on Policy Keys (External IdP's/REST API's), unless the Policy Keys already exist within the directory prior to deployment.
     </li>
     <li>
-        You cannot use this to deploy any Policy Sample that relies on JavaScript page contracts (unless you've already enabled page contracts).
+        You cannot use this to deploy any Policy Sample that relies on JavaScript page contracts (unless you've already <a href"https://docs.microsoft.com/en-us/azure/active-directory-b2c/javascript-and-page-layout?pivots=b2c-custom-policy#select-a-page-layout-version" target="_blank">enabled page contracts manually</a> or via the Initial Setup).
     </li>
 </ul>
-</p>
+<p>
     If you believe you attempted to upload a sample which met these conditions, but did not upload successfully,
     raise an issue <a href="https://github.com/azure-ad-b2c/samples/issues" target="_blank">here</a>.
 </p>
@@ -32,23 +36,51 @@
 
 <form asp-action="Experimental" asp-controller="Home">
     <label asp-for="DomainName"></label>
-    <p><input asp-for="DomainName" placeholder="yourdomain" style="text-align: right" />.onmicrosoft.com</p>
+    <p><input asp-for="DomainName" placeholder="yourdomain" style="text-align: right" required:  />.onmicrosoft.com</p>
     <label asp-for="SampleName"></label>
-    <p><input asp-for="SampleName" placeholder="banned-password-list-no-API" style="text-align: left" /></p>
-    <input type="submit" />
+    <p><input asp-for="SampleName" value="@data.sampleFolderName" placeholder="banned-password-list-no-API" style="text-align: left" /></p>
+    <input type="submit" value="Deploy custom policy sample" />
 </form>
 
 <hr />
 <h4>Possible sample values</h4>
+<br>
 
-<table class="table table-responsive table-hover">
-    <tr>
-        <th>Name</th>
-    </tr>
-    @foreach (var name in Model.SampleValues)
-    {
-        <tr>
-            <td>@name.Name</td>
-        </tr>
+<div class="table-wrapper">
+    <table class="table table-responsive table-hover">
+        <thead>
+            <tr>
+                <th class="nameCol">Name</th>
+                <th class="nameCol">Sample Folder Name</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        @foreach (var item in Model.SampleValues)
+        {
+            <tr>
+                <td class="block"><a href="https://github.com/azure-ad-b2c/samples/tree/master/policies/@item.folderName" target="_blank">@item.displayName</a></td>
+                <td>@item.folderName</td>
+                <td>@item.description</td>
+            </tr>
+        }
+    </table>
+</div>
+<style>
+    .nameCol {
+        width: 25%;
     }
-</table>
+
+    .table-wrapper {
+        width: auto;
+        overflow: auto;
+        height: 500px;
+    }
+
+    table thead tr th {
+        text-align: left;
+        position: sticky;
+        top: 0px;
+        background-color: #fff;
+        color: #000;
+    }
+</style>

@@ -14,15 +14,19 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 
 namespace B2CIEFSetupWeb.Utilities
 {
     public interface IB2CSetup
     {
-        Task<List<IEFObject>> SetupAsync(string domainId, bool readOnly, string dirDomainName, bool initialisePhoneSignInJourneys, string PolicySample);
+        Task<List<IEFObject>> SetupAsync(string domainId, bool readOnly, string dirDomainName, bool initialisePhoneSignInJourneys, string PolicySample, bool enableJS);
     }
     public class B2CSetup : IB2CSetup
     {
+
+        private TelemetryClient telemetry = new TelemetryClient();
         private readonly ITokenAcquisition _tokenAcquisition;
         private readonly ILogger<B2CSetup> _logger;
         private HttpClient _http;
@@ -34,14 +38,23 @@ namespace B2CIEFSetupWeb.Utilities
         public string DomainName { get; private set; }
         private bool _readOnly = false;
         private bool _removeFb = false;
+        private bool _enableJS = false;
         public string PolicySample { get; private set; }
-        public async Task<List<IEFObject>> SetupAsync(string domainId, bool removeFb, string dirDomainName, bool initialisePhoneSignInJourneys, string PolicySample )
+        public async Task<List<IEFObject>> SetupAsync(string domainId, bool removeFb, string dirDomainName, bool initialisePhoneSignInJourneys, string PolicySample, bool enableJS)
         {
+
             using (_logger.BeginScope("SetupAsync: {0} - Read only: {1}", domainId, removeFb))
             {
+                telemetry.InstrumentationKey = "a1dfc418-6ff5-4662-a7a1-f2faa979e74f";
                 _actions = new List<IEFObject>();
                 if (PolicySample != "null")
                 {
+                    var startProperties = new Dictionary<string, string>
+                        {{"Result", "Success"}};
+                    // Send the event:
+                    telemetry.Context.Operation.Name = "Deploy Sample Policy"; 
+                    telemetry.TrackEvent("Start deployment", startProperties);
+                    bool usingSample = true;
                     var token = await _tokenAcquisition.GetAccessTokenOnBehalfOfUserAsync(
                         Constants.ReadWriteScopes,
                         domainId);
@@ -49,7 +62,7 @@ namespace B2CIEFSetupWeb.Utilities
                     _http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
                     HttpClient _httpToRepoAPI = new HttpClient();
-                    string urlToFetchPolices = "https://-/api/FetchRepo?policyname=" + PolicySample;
+                    string urlToFetchPolices = "https://gitrepomanager.azurewebsites.net/api/FetchRepo?policyname=" + PolicySample;
                     var json = await _httpToRepoAPI.GetStringAsync(urlToFetchPolices);
                     var value = JArray.Parse(json);
 
@@ -90,13 +103,30 @@ namespace B2CIEFSetupWeb.Utilities
 
                     //build k-v pair list of policyId:policyFilen
                     var policyList = buildPolicyListByPolicyId(policyFileList);
-                    await UploadPolicyFiles(policyList);
+                    await UploadPolicyFiles(policyList, usingSample, PolicySample);
+
+                    var endSampleUploadProperties = new Dictionary<string, string>
+                        {{"Result", "Success"}};
+                    // Send the event:
+                    telemetry.Context.Operation.Name = "Deploy Sample Policy";
+                    telemetry.TrackEvent("Completed deployment", endSampleUploadProperties);
+
                     return _actions;
                 }
 
 
                 if (PolicySample == "null") { 
                     _removeFb = removeFb;
+                    _enableJS = enableJS;
+
+                    
+                    // Set up some properties and metrics:
+                    var startProperties = new Dictionary<string, string>
+                        {{"Result", "Success"}};
+                    // Send the event:
+                    telemetry.Context.Operation.Name = "Deploy Starter Pack";
+                    telemetry.TrackEvent("Started Starter Pack deployment", startProperties);
+
                     try
                     {
                         var token = await _tokenAcquisition.GetAccessTokenOnBehalfOfUserAsync(
@@ -186,6 +216,9 @@ namespace B2CIEFSetupWeb.Utilities
                     // setup login-noninteractive and ext attribute support
                     policyList = SetupAADCommon(policyList, initialisePhoneSignInJourneys);
 
+                    if (_enableJS) { policyList = EnableJavascript(policyList, initialisePhoneSignInJourneys); }
+                    
+
                     if (!removeFb)
                     {
                         await SetupDummyFacebookSecret(removeFb);
@@ -200,10 +233,15 @@ namespace B2CIEFSetupWeb.Utilities
                         });
                     }
 
-                    await UploadPolicyFiles(policyList);
+                    await UploadPolicyFiles(policyList, false, "");
                     await CreateJwtMsTestApp();
                 } 
             }
+            var endProperties = new Dictionary<string, string>
+                        {{"Result", "Success"}};
+            // Send the event:
+            telemetry.Context.Operation.Name = "Deploy Starter Pack";
+            telemetry.TrackEvent("Completed Starter Pack deployment", endProperties);
             return _actions;
         }
         public List<IEFObject> _actions;
@@ -289,14 +327,20 @@ namespace B2CIEFSetupWeb.Utilities
                 Status = IEFObject.S.NotFound
             });
             _actions[0].Id = await GetAppIdAsync(_actions.First(kvp => kvp.Name == "IdentityExperienceFramework").Name);
-            if (!String.IsNullOrEmpty(_actions[0].Id)) _actions[0].Status = IEFObject.S.Exists;
+            if (!String.IsNullOrEmpty(_actions[0].Id)) {
+                // here we should PATCH the object to repair it
+                _actions[0].Status = IEFObject.S.Exists; 
+            }
             _actions.Add(new IEFObject()
             {
                 Name = ProxyAppName,
                 Status = IEFObject.S.NotFound
             });
             _actions[1].Id = await GetAppIdAsync(_actions.First(kvp => kvp.Name == "ProxyIdentityExperienceFramework").Name);
-            if (!String.IsNullOrEmpty(_actions[1].Id)) _actions[1].Status = IEFObject.S.Exists;
+            if (!String.IsNullOrEmpty(_actions[1].Id)) { 
+                // here we should PATCH the object to repair it
+                _actions[1].Status = IEFObject.S.Exists; 
+            }
 
             if (!String.IsNullOrEmpty(_actions[0].Id) && !String.IsNullOrEmpty(_actions[1].Id)) return; // Sorry! What if only one exists?
             //TODO: should verify whether the two apps are setup correctly
@@ -449,7 +493,7 @@ namespace B2CIEFSetupWeb.Utilities
             return;
         }
 
-        private async Task UploadPolicyFiles(Dictionary<string, string> policyFileList)
+        private async Task UploadPolicyFiles(Dictionary<string, string> policyFileList, bool usingSample, string sampleName)
         {
             foreach (KeyValuePair<string, string> policy in policyFileList)
             {
@@ -466,6 +510,15 @@ namespace B2CIEFSetupWeb.Utilities
                         Id = policyFileId,
                         Status = IEFObject.S.Uploaded
                     });
+                    if (usingSample)
+                    {
+                        // Set up some properties and metrics:
+                        var properties = new Dictionary<string, string>
+                        {{"PolicyName", policyFileId}, {"Result", "Success"}};
+                        // Send the event:
+                        telemetry.Context.Operation.Name = "Deploy Sample Policy";
+                        telemetry.TrackEvent("Sample Policy upload", properties);
+                    }
 
                 }
                 if (!resp.IsSuccessStatusCode)
@@ -477,15 +530,62 @@ namespace B2CIEFSetupWeb.Utilities
                         Status = IEFObject.S.Failed,
                         Reason =  resp.ReasonPhrase
                     });
-
+                    if (usingSample)
+                    {
+                        // Set up some properties and metrics:
+                        var properties = new Dictionary<string, string>
+                        {{"PolicyFolderName", sampleName}, {"Result", "Failure"}};
+                        // Send the event:
+                        telemetry.Context.Operation.Name = "Deploy Sample Policy";
+                        telemetry.TrackEvent("Sample Policy upload", properties);
+                    }
                 }
             }
+        }
+        private Dictionary<string, string> EnableJavascript(Dictionary<string, string> policyList, bool initialisePhoneSignInJourneys)
+        {
+            string jsContentDefinitions = @"    
+                            <ContentDefinitions>
+                              <ContentDefinition Id=""api.error"">
+                                <DataUri>urn:com:microsoft:aad:b2c:elements:contract:globalexception:1.2.0</DataUri>
+                              </ContentDefinition>
+                              <ContentDefinition Id=""api.idpselections"">
+                                <DataUri>urn:com:microsoft:aad:b2c:elements:contract:providerselection:1.2.0</DataUri>
+                              </ContentDefinition>
+                              <ContentDefinition Id=""api.idpselections.signup"">
+                                <DataUri>urn:com:microsoft:aad:b2c:elements:contract:providerselection:1.2.0</DataUri>
+                              </ContentDefinition>
+                              <ContentDefinition Id=""api.signuporsignin"">
+                                <DataUri>urn:com:microsoft:aad:b2c:elements:contract:unifiedssp:2.1.1</DataUri>
+                              </ContentDefinition>
+                              <ContentDefinition Id=""api.selfasserted"">
+                                <DataUri>urn:com:microsoft:aad:b2c:elements:contract:selfasserted:2.1.1</DataUri>
+                              </ContentDefinition>
+                              <ContentDefinition Id=""api.selfasserted.profileupdate"">
+                                <DataUri>urn:com:microsoft:aad:b2c:elements:contract:selfasserted:2.1.1</DataUri>
+                              </ContentDefinition>
+                              <ContentDefinition Id=""api.localaccountsignup"">
+                                <DataUri>urn:com:microsoft:aad:b2c:elements:contract:selfasserted:2.1.1</DataUri>
+                              </ContentDefinition>
+                              <ContentDefinition Id=""api.localaccountpasswordreset"">
+                                <DataUri>urn:com:microsoft:aad:b2c:elements:contract:selfasserted:2.1.1</DataUri>
+                              </ContentDefinition>
+                              <ContentDefinition Id=""api.phonefactor"">
+                                <DataUri>urn:com:microsoft:aad:b2c:elements:contract:multifactor:1.2.0</DataUri>
+                              </ContentDefinition>
+                            </ContentDefinitions>
+                        </BuildingBlocks>";
 
+            string extFile = policyList.First(kvp => kvp.Key == "B2C_1A_TrustFrameworkExtensions").Value;
+
+            extFile = extFile.Replace("</BuildingBlocks>", jsContentDefinitions);
+            policyList["B2C_1A_TrustFrameworkExtensions"] = extFile;
+
+            return policyList;
 
         }
-
-        private Dictionary<string, string> SetupAADCommon(Dictionary<string, string> policyList, bool initialisePhoneSignInJourneys)
-        {
+            private Dictionary<string, string> SetupAADCommon(Dictionary<string, string> policyList, bool initialisePhoneSignInJourneys)
+            {
 
             string extFile = policyList.First(kvp => kvp.Key == "B2C_1A_TrustFrameworkExtensions").Value;
 
@@ -498,6 +598,9 @@ namespace B2CIEFSetupWeb.Utilities
 
                 phoneFile = phoneFile.Replace("ProxyIdentityExperienceFrameworkAppId", _actions.First(kvp => kvp.Name == "ProxyIdentityExperienceFramework").Id);
                 phoneFile = phoneFile.Replace("IdentityExperienceFrameworkAppId", _actions.First(kvp => kvp.Name == "IdentityExperienceFramework").Id);
+                phoneFile = phoneFile.Replace("{insert your privacy statement URL}", "https://myprivacycontenturl.com");
+                phoneFile = phoneFile.Replace("{insert your terms and conditions URL}", "https://mytermsofuseurl.com");
+                policyList["B2C_1A_Phone_Email_Base"] = phoneFile;
 
             }
 
@@ -524,7 +627,7 @@ namespace B2CIEFSetupWeb.Utilities
             //policyList.RemoveAll(kvp => kvp.Key == "B2C_1A_TrustFrameworkExtensions");
             //policyList.Add(new KeyValuePair<string, string>("B2C_1A_TrustFrameworkExtensions", extFile));
 
-            policyList["B2C_1A_TrustFrameworkExtensions"] = extFile;
+            policyList["B2C_1A_TrustFrameworkExtensions"] = extFile;           
 
             return policyList;
         }
