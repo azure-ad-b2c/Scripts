@@ -25,7 +25,7 @@ $ python check_b2cdomain.py -custom-domain "your.domain.name" -policy "b2c_1_pol
 
 For example, running the script against ```accountuat.contosobank.co.uk``` domain will first verify the presense of CNAME entry to AFD instance. After that, it will make a request to Azure AD B2C endpoint and then examine the headers from the response to ensrue traffic is traveling back via AFD <--> Azure AD B2C.
 ```
-$ python3 check_b2cdomain.py -custom-domain "accountuat.contosobank.co.uk" -policy "b2c_1_susi" 
+$ python check_b2cdomain.py -custom-domain "accountuat.contosobank.co.uk" -policy "b2c_1_susi" 
 
 ⏳ Searching AFD mapping for domain: [accountuat.contosobank.co.uk]
 💯 FOUND! [accountuat.contosobank.co.uk] is mapped to AFD [contosodem.azurefd.net.]
