@@ -15,7 +15,7 @@ $ cd custom-domain
 
 Install the required packages.
 ```
-$ pip install -r requirements
+$ pip install -r requirements.txt
 ```
 
 ## Run the script
