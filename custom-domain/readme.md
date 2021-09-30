@@ -35,6 +35,14 @@ $ python check_b2cdomain.py -custom-domain "accountuat.contosobank.co.uk" -polic
    ✅ AFD Header [X-Azure-OriginStatusCode] found with HTTP code 200! All good on the connection side from AFD --> Azure AD B2C.
 🚀 Yay! Domain [accountuat.contosobank.co.uk] is configured correctly for AFD & Azure AD B2C usage! [All Good ✅ ]
 ```
+### Powershell
+
+![Powershell](./images/powershell.png)
+
+### Bash
+
+![Bash](./images/bash.png)
+
 ## Troubleshooting
 
 To view parameters use ``-h`` or ``--help`` swtich.
