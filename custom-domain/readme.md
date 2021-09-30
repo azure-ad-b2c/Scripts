@@ -10,7 +10,7 @@ Details about custom domain feature are available at [Enable custom domains for 
 ## Installation 
 ```
 $ git clone https://github.com/azure-ad-b2c/Scripts.git
-$ cd custom-domain
+$ cd ./Scripts/custom-domain/
 ```
 
 Install the required packages.
