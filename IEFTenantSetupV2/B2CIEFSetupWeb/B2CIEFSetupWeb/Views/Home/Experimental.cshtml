@@ -1,21 +1,17 @@
 ﻿@model SetupRequestPolicySample
 @{
-    ViewData["Title"] = "Experimental";
+    ViewData["Title"] = "Quick Deploy Samples";
     var data = (sampleFolderBootstrap)ViewData["Message"];
 }
-<h1>Experimental</h1>
+<h1>Quick Deploy Samples</h1>
 
 <p>
-    This experimental section will deploy a policy from the <a href="https://github.com/azure-ad-b2c/samples" target="_blank">Azure AD B2C Samples GitHub</a> automatically to your Azure AD B2C directory.
-
-</p>
+    This section will deploy a sample policy from the <a href="https://github.com/azure-ad-b2c/samples" target="_blank">Azure AD B2C Samples GitHub</a> to your Azure AD B2C directory. 
+    All supported samples for quick-deploy are listed in the table below.
+    </p>
 
 <ul>
     <li><b>You must have run the <a href="https://aka.ms/iefsetup" target="_blank">initial setup</a> before continuing with this page.</b></li>
-
-    <li>
-        This process can sometimes overwrite the Base and Extension files deployed via the Initial Setup. You can safely run the Initial Setup again to restore them.
-    </li>
 
     <li>
         You cannot use this to deploy any Policy Sample that relies on Policy Keys (External IdP's/REST API's), unless the Policy Keys already exist within the directory prior to deployment.
