@@ -21,7 +21,7 @@
         You cannot use this to deploy any Policy Sample that relies on Policy Keys (External IdP's/REST API's), unless the Policy Keys already exist within the directory prior to deployment.
     </li>
     <li>
-        You cannot use this to deploy any Policy Sample that relies on JavaScript page contracts (unless you've already <a href"https://docs.microsoft.com/en-us/azure/active-directory-b2c/javascript-and-page-layout?pivots=b2c-custom-policy#select-a-page-layout-version" target="_blank">enabled page contracts manually</a> or via the Initial Setup).
+        You cannot use this to deploy any Policy Sample that relies on JavaScript page contracts (unless you've already <a href"https: //docs.microsoft.com/en-us/azure/active-directory-b2c/javascript-and-page-layout?pivots =b2c-custom-policy#select-a-page-layout-version" target="_blank">enabled page contracts manually</a> or via the Initial Setup).
     </li>
 </ul>
 <p>
@@ -36,51 +36,52 @@
 
 <form asp-action="Experimental" asp-controller="Home">
     <label asp-for="DomainName"></label>
-    <p><input asp-for="DomainName" placeholder="yourdomain" style="text-align: right" required:  />.onmicrosoft.com</p>
+    <p><input asp-for="DomainName" placeholder="yourdomain" style="text-align: right" required: />.onmicrosoft.com</p>
     <label asp-for="SampleName"></label>
     <p><input asp-for="SampleName" value="@data.sampleFolderName" placeholder="banned-password-list-no-API" style="text-align: left" /></p>
     <input type="submit" value="Deploy custom policy sample" />
 </form>
 
-<hr />
-<h4>Possible sample values</h4>
-<br>
+    <hr />
+    <h4>Possible sample values</h4>
+    <br>
 
-<div class="table-wrapper">
-    <table class="table table-responsive table-hover">
-        <thead>
-            <tr>
-                <th class="nameCol">Name</th>
-                <th class="nameCol">Sample Folder Name</th>
-                <th>Description</th>
-            </tr>
-        </thead>
-        @foreach (var item in Model.SampleValues)
-        {
-            <tr>
-                <td class="block"><a href="https://github.com/azure-ad-b2c/samples/tree/master/policies/@item.folderName" target="_blank">@item.displayName</a></td>
-                <td>@item.folderName</td>
-                <td>@item.description</td>
-            </tr>
+    <div class="table-wrapper">
+        <table class="table table-responsive table-hover">
+            <thead>
+                <tr>
+                    <th class="nameCol">Name</th>
+                    <th class="nameCol">Sample Folder Name</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            @foreach (var item in Model.SampleValues)
+            {
+                <tr>
+                    <td class="block"><a href="https://github.com/azure-ad-b2c/samples/tree/master/policies/@item.folderName" target="_blank">@item.displayName</a></td>
+                    <td>@item.folderName</td>
+                    <td>@item.description</td>
+                </tr>
+            }
+        </table>
+    </div>
+
+    <style>
+        .nameCol {
+            width: 25%;
         }
-    </table>
-</div>
-<style>
-    .nameCol {
-        width: 25%;
-    }
 
-    .table-wrapper {
-        width: auto;
-        overflow: auto;
-        height: 500px;
-    }
+        .table-wrapper {
+            width: auto;
+            overflow: auto;
+            height: 500px;
+        }
 
-    table thead tr th {
-        text-align: left;
-        position: sticky;
-        top: 0px;
-        background-color: #fff;
-        color: #000;
-    }
-</style>
+        table thead tr th {
+            text-align: left;
+            position: sticky;
+            top: 0px;
+            background-color: #fff;
+            color: #000;
+        }
+    </style>

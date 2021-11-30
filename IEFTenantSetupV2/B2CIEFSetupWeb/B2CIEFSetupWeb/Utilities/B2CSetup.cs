@@ -196,6 +196,7 @@ namespace B2CIEFSetupWeb.Utilities
 
                         // Insert user journeys from LocalAccounts base file into Ext file.
                         XmlDocument localBase = new XmlDocument();
+                        //string baseFileLocal = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/tree/localization/LocalAccounts/TrustFrameworkBase.xml");
                         string baseFileLocal = new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/TrustFrameworkBase.xml");
                         localBase.LoadXml(baseFileLocal);
                         XmlNode localBaseJourneys = localBase.SelectSingleNode("/xsl:TrustFrameworkPolicy/xsl:UserJourneys", nsmgr);
@@ -253,17 +254,19 @@ namespace B2CIEFSetupWeb.Utilities
         {
 
             var policyFileList = new List<string>();
-            policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/TrustFrameworkBase.xml"));
+            policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/localization/SocialAndLocalAccountsWithMfa/TrustFrameworkBase.xml"));
 
             if (!removeFb)
             {
-                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/TrustFrameworkExtensions.xml"));
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/TrustFrameworkLocalization.xml"));
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/TrustFrameworkExtensions.xml"));                
                 policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/SignUpOrSignin.xml"));
                 policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/PasswordReset.xml"));
                 policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/ProfileEdit.xml"));
             }
             if (removeFb)
             {
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/TrustFrameworkLocalization.xml"));
                 policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/TrustFrameworkExtensions.xml"));
                 policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/SignUpOrSignin.xml"));
                 policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/LocalAccounts/PasswordReset.xml"));
@@ -502,6 +505,9 @@ namespace B2CIEFSetupWeb.Utilities
                 string policyFileId = policyFile.Root.Attribute("PolicyId").Value;
                 var resp = await _http.PutAsync($"https://graph.microsoft.com/beta/trustFramework/policies/" + policyFileId + "/$value",
                 new StringContent(policy.Value, Encoding.UTF8, "application/xml"));
+                //UploadError contents = (UploadError)JsonConvert.DeserializeObject(await resp.Content.ReadAsStringAsync());
+                var respContents = await resp.Content.ReadAsStringAsync();
+                
                 if (resp.IsSuccessStatusCode)
                 {
                     _actions.Add(new IEFObject()
@@ -514,7 +520,7 @@ namespace B2CIEFSetupWeb.Utilities
                     {
                         // Set up some properties and metrics:
                         var properties = new Dictionary<string, string>
-                        {{"PolicyName", policyFileId}, {"Result", "Success"}};
+                        {{"PolicyName", sampleName}, {"Result", "Success"}};
                         // Send the event:
                         telemetry.Context.Operation.Name = "Deploy Sample Policy";
                         telemetry.TrackEvent("Sample Policy upload", properties);
@@ -523,18 +529,19 @@ namespace B2CIEFSetupWeb.Utilities
                 }
                 if (!resp.IsSuccessStatusCode)
                 {
+                    UploadError error = JsonConvert.DeserializeObject<UploadError>(respContents);
                     _actions.Add(new IEFObject()
                     {
                         Name = "Policy",
                         Id = policyFileId,
                         Status = IEFObject.S.Failed,
-                        Reason =  resp.ReasonPhrase
+                        Reason = error.error.message
                     });
                     if (usingSample)
                     {
                         // Set up some properties and metrics:
                         var properties = new Dictionary<string, string>
-                        {{"PolicyFolderName", sampleName}, {"Result", "Failure"}};
+                        {{"PolicyFolder", sampleName}, {"Result", "Failure"}, {"Error", error.error.message}};
                         // Send the event:
                         telemetry.Context.Operation.Name = "Deploy Sample Policy";
                         telemetry.TrackEvent("Sample Policy upload", properties);
@@ -640,7 +647,6 @@ namespace B2CIEFSetupWeb.Utilities
                 identifierUris = new List<string>() { $"https://{DomainName}/IEFTestApp" },
                 displayName = "IEF Test App",
                 signInAudience = "AzureADandPersonalMicrosoftAccount",
-                publicClient = new { redirectUris = new List<string>() { $"https://jwt.ms" } },
                 parentalControlSettings = new { legalAgeGroupRule = "Allow" },
                 requiredResourceAccess = new List<object>() {
                     new {
@@ -660,6 +666,7 @@ namespace B2CIEFSetupWeb.Utilities
                 },
                 web = new
                 {
+                    redirectUris = new List<string>() { $"https://jwt.ms" },
                     implicitGrantSettings = new
                     {
                         enableIdTokenIssuance = true,
