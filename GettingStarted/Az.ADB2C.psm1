@@ -311,7 +311,7 @@ function Connect-AzADB2C
     Filename if only downloading a single file. 
 
 .EXAMPLE
-    Get-AzADB2CStarterPack -PolicyType "SocialAndLocalAccountsWithMfa"
+    Get-AzADB2CStarterPack -PolicyType "SocialAndLocalAccounts"
 #>
 function Get-AzADB2CStarterPack(
     [Parameter(Mandatory=$false)][Alias('p')][string]$PolicyPath = "",
@@ -373,10 +373,10 @@ function Get-AzADB2CStarterPack(
     New-AzADB2CPolicyProject -PolicyPrefix "demo"
 
 .EXAMPLE
-    New-AzADB2CPolicyProject -PolicyPrefix "demo" -PolicyType "SocialAndLocalWithMfa"
+    New-AzADB2CPolicyProject -PolicyPrefix "demo" -PolicyType "SocialAndLocalAccounts"
 
 .EXAMPLE
-    New-AzADB2CPolicyProject -PolicyPrefix "demo" -PolicyType "SocialAndLocalWithMfa" -NoCustomAttributes:$True
+    New-AzADB2CPolicyProject -PolicyPrefix "demo" -PolicyType "SocialAndLocalAccounts" -NoCustomAttributes:$True
 #>
 function New-AzADB2CPolicyProject
 (

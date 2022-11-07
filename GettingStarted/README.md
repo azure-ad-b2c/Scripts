@@ -126,7 +126,7 @@ New-AzADB2CPolicyProject -PolicyPrefix "demo"
 The default PolicyType is `SocialAndLocalAccounts` and if you would like to base your policies on another type, you specify that on the command line.
 
 ```powershell
-New-AzADB2CPolicyProject -PolicyPrefix "demo" -PolicyType "SocialAndLocalAccountsWithMfa"
+New-AzADB2CPolicyProject -PolicyPrefix "demo" -PolicyType "SocialAndLocalAccounts"
 ```
 
 After you have run `New-AzADB2CPolicyProject`, you can directly push them to your tenant and test them

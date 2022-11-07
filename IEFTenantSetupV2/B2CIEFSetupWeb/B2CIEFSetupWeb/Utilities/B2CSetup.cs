@@ -254,15 +254,15 @@ namespace B2CIEFSetupWeb.Utilities
         {
 
             var policyFileList = new List<string>();
-            policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/localization/SocialAndLocalAccountsWithMfa/TrustFrameworkBase.xml"));
+            policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/localization/SocialAndLocalAccounts/TrustFrameworkBase.xml"));
 
             if (!removeFb)
             {
-                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/TrustFrameworkLocalization.xml"));
-                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/TrustFrameworkExtensions.xml"));                
-                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/SignUpOrSignin.xml"));
-                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/PasswordReset.xml"));
-                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccountsWithMfa/ProfileEdit.xml"));
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccounts/TrustFrameworkLocalization.xml"));
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccounts/TrustFrameworkExtensions.xml"));                
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccounts/SignUpOrSignin.xml"));
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccounts/PasswordReset.xml"));
+                policyFileList.Add(new WebClient().DownloadString("https://raw.githubusercontent.com/Azure-Samples/active-directory-b2c-custom-policy-starterpack/master/SocialAndLocalAccounts/ProfileEdit.xml"));
             }
             if (removeFb)
             {
