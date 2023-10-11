@@ -349,17 +349,6 @@ namespace B2CIEFSetupWeb.Utilities
             //TODO: should verify whether the two apps are setup correctly
             if (_readOnly) return;
 
-            var requiredAADAccess = new
-            {
-                resourceAppId = "00000002-0000-0000-c000-000000000000",
-                resourceAccess = new List<object>()
-            {
-                new {
-                    id = "311a71cc-e848-46a1-bdf8-97ff7156d8e6",
-                    type = "Scope"
-                }
-            }
-            };
             var iefApiPermission = new
             {
                 adminConsentDescription = $"Allow the application to access {AppName} on behalf of the signed-in user.",
@@ -436,17 +425,6 @@ namespace B2CIEFSetupWeb.Utilities
                     {
                         new {
                             id = iefApiPermission.id,
-                            type = "Scope"
-                        }
-                    }
-                },
-                new {
-                    resourceAppId = "00000002-0000-0000-c000-000000000000",
-                    resourceAccess = new List<object>()
-                    {
-                        new
-                        {
-                            id = "311a71cc-e848-46a1-bdf8-97ff7156d8e6",
                             type = "Scope"
                         }
                     }
